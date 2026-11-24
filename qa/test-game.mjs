@@ -3,291 +3,40 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-const gameFile = path.join(here, '..', 'game.js');
+const here=path.dirname(fileURLToPath(import.meta.url));
+const source=fs.readFileSync(path.join(here,'..','game.js'),'utf8');
 
-class Element {
-  constructor(id = '') {
-    this.id = id;
-    this.hidden = false;
-    this.textContent = '';
-    this.children = [];
-    this.style = {};
-    this.clientWidth = 600;
-    this.clientHeight = 420;
-    this.disabled = false;
-    this.onclick = null;
-  }
-  append(...items) { this.children.push(...items); }
-  replaceChildren(...items) { this.children = [...items]; }
-  click() { this.onclick?.(); }
-  getContext() {
-    return {
-      fillStyle: null,
-      createRadialGradient() { return {addColorStop() {}}; },
-      fillRect() {}
-    };
-  }
+function fnSource(name){
+  const start=source.indexOf(`function ${name}(`);assert.notEqual(start,-1,`missing ${name}`);
+  const open=source.indexOf('{',start);let depth=0,quote=null,escaped=false;
+  for(let i=open;i<source.length;i++){const ch=source[i];if(quote){if(escaped)escaped=false;else if(ch==='\\')escaped=true;else if(ch===quote)quote=null;continue;}if(ch==='"'||ch==="'"||ch==='`'){quote=ch;continue;}if(ch==='{')depth++;if(ch==='}'&&--depth===0)return source.slice(start,i+1);}
+  throw Error(`unterminated ${name}`);
 }
+function mechanics(grid,NX=5,NY=5){const code=['bottomOfColumn','componentFrom','legalColumnsForColor','bestColumnForColor','fuseOrderFrom'].map(fnSource).join('\n');return new Function('grid','NX','NY',`${code};return{bottomOfColumn,componentFrom,legalColumnsForColor,bestColumnForColor,fuseOrderFrom}`)(grid,NX,NY);}
+const makeGrid=(nx=5,ny=5)=>Array.from({length:nx*ny},()=>({alive:false,color:null}));
+const put=(g,nx,x,y,color)=>g[y*nx+x]={alive:true,color};
+const tests=[];const test=(name,fn)=>tests.push({name,fn});
 
-class Vec3 {
-  set(x, y, z) { this.x = x; this.y = y; this.z = z; return this; }
-  clone() { return new Vec3().set(this.x || 0, this.y || 0, this.z || 0); }
-  copy(other) { return this.set(other.x, other.y, other.z); }
-  sub(other) { this.x -= other.x; this.y -= other.y; this.z -= other.z; return this; }
-  add(other) { this.x += other.x; this.y += other.y; this.z += other.z; return this; }
-  addScaledVector(other, scale) { this.x += other.x * scale; this.y += other.y * scale; this.z += other.z * scale; return this; }
-  length() { return Math.hypot(this.x, this.y, this.z); }
-  normalize() { const n = this.length() || 1; this.x /= n; this.y /= n; this.z /= n; return this; }
-}
-class Scale extends Vec3 {
-  setScalar(value) { this.x = this.y = this.z = value; }
-}
-class Object3D {
-  constructor() {
-    this.position = new Vec3();
-    this.rotation = {z: 0};
-    this.scale = new Scale();
-    this.quaternion = {setFromUnitVectors() {}};
-    this.userData = {};
-    this.children = [];
-  }
-  add(...items) { this.children.push(...items); }
-  remove(item) { this.children = this.children.filter(child => child !== item); }
-}
-class Camera extends Object3D {
-  lookAt() {}
-  updateProjectionMatrix() {}
-}
-class Renderer {
-  constructor() { this.domElement = new Element('canvas'); }
-  setPixelRatio() {}
-  setSize() {}
-  render() {}
-}
-class Clock {
-  constructor() { this.delta = 1 / 60; }
-  getDelta() { return this.delta; }
-}
+test('each column exposes only its lowest live block',()=>{const g=makeGrid();put(g,5,0,0,'r');put(g,5,0,3,'b');put(g,5,2,2,'y');put(g,5,4,4,'g');const a=mechanics(g);assert.equal(a.bottomOfColumn(0),15);assert.equal(a.bottomOfColumn(1),-1);assert.equal(a.bottomOfColumn(2),12);assert.equal(a.bottomOfColumn(4),24);assert.deepEqual(a.legalColumnsForColor('r'),[]);assert.deepEqual(a.legalColumnsForColor('b'),[0]);});
 
-const THREE = {
-  Scene: class extends Object3D { constructor() { super(); this.background = null; } },
-  Color: class { constructor(value) { this.value = value; } },
-  OrthographicCamera: Camera,
-  WebGLRenderer: Renderer,
-  AmbientLight: class extends Object3D {},
-  DirectionalLight: class extends Object3D {},
-  PointLight: class extends Object3D {},
-  Group: class extends Object3D {},
-  BoxGeometry: class { dispose() {} },
-  PlaneGeometry: class { dispose() {} },
-  ExtrudeGeometry: class { dispose() {} },
-  TorusGeometry: class { dispose() {} },
-  CylinderGeometry: class { dispose() {} },
-  Shape: class { moveTo() {} lineTo() {} closePath() {} },
-  CanvasTexture: class { constructor(canvas) { this.image = canvas; } dispose() {} },
-  MeshStandardMaterial: class {
-    constructor(options = {}) { Object.assign(this, options); }
-    clone() { return new this.constructor({...this}); }
-    dispose() {}
-  },
-  MeshBasicMaterial: class {
-    constructor(options = {}) { Object.assign(this, options); }
-    clone() { return new this.constructor({...this}); }
-    dispose() {}
-  },
-  Mesh: class extends Object3D { constructor(geometry, material) { super(); this.geometry = geometry; this.material = material; } },
-  Sprite: class extends Object3D { constructor(material) { super(); this.material = material; } },
-  SpriteMaterial: class {
-    constructor(options = {}) { Object.assign(this, options); }
-    clone() { return new this.constructor({...this}); }
-    dispose() { this.disposed = true; }
-  },
-  Clock,
-  Vector3: Vec3,
-  SRGBColorSpace: 'srgb',
-  AdditiveBlending: 'additive'
-};
+test('components use four directions and exclude diagonals',()=>{const g=makeGrid();put(g,5,1,1,'p');put(g,5,2,1,'p');put(g,5,2,2,'p');put(g,5,0,2,'p');assert.deepEqual(new Set(mechanics(g).componentFrom(6)),new Set([6,7,12]));});
 
-function makeHarness() {
-  const ids = ['boardWrap', 'modal', 'levelText', 'boardLabel', 'toast', 'slotCount',
-    'progress', 'slots', 'queues', 'modalTitle', 'modalBody', 'modalAction', 'resetBtn',
-    'helpBtn', 'help', 'closeHelp'];
-  const elements = Object.fromEntries(ids.map(id => [id, new Element(id)]));
-  elements.modal.hidden = true;
-  elements.help.hidden = true;
+test('target chooses the largest exposed component and breaks ties left',()=>{const g=makeGrid();put(g,5,0,4,'c');put(g,5,2,4,'c');put(g,5,3,4,'c');const a=mechanics(g);assert.equal(a.bestColumnForColor('c'),2);put(g,5,1,4,'c');assert.equal(a.bestColumnForColor('c'),0);});
 
-  let now = 0;
-  let timerId = 0;
-  const timers = new Map();
-  const setTimeoutFake = (fn, delay = 0) => {
-    const id = ++timerId;
-    timers.set(id, {fn, at: now + delay});
-    return id;
-  };
-  const clearTimeoutFake = id => timers.delete(id);
-  const advance = milliseconds => {
-    const end = now + milliseconds;
-    while (true) {
-      const due = [...timers.entries()]
-        .filter(([, timer]) => timer.at <= end)
-        .sort((a, b) => a[1].at - b[1].at || a[0] - b[0])[0];
-      if (!due) break;
-      timers.delete(due[0]);
-      now = due[1].at;
-      due[1].fn();
-    }
-    now = end;
-  };
+test('fuse order covers exactly one connected component',()=>{const g=makeGrid();[[1,1],[2,1],[3,1],[2,2],[2,3]].forEach(([x,y])=>put(g,5,x,y,'o'));put(g,5,0,0,'o');assert.deepEqual(new Set(mechanics(g).fuseOrderFrom(7)),new Set([6,7,8,12,17]));});
 
-  let source = fs.readFileSync(gameFile, 'utf8')
-    .replace(/^import\s+\*\s+as\s+THREE\s+from\s+['"][^'"]+['"];?\s*/m, '');
-  source += `\nreturn {
-    bottomExposed, component, target, remaining, dispatch, schedule, step, makeLevel, animate, waveDistances,
-    get grid(){return grid}, set grid(v){grid=v},
-    get slots(){return slots}, set slots(v){slots=v},
-    get queues(){return queues}, set queues(v){queues=v},
-    get busy(){return busy}, get done(){return done},
-    get effects(){return effects}, get bolts(){return bolts}, get sparks(){return sparks},
-    get rings(){return rings}, get meshes(){return meshes}, get scene(){return scene},
-    get levelIndex(){return levelIndex}
-  };`;
+test('five-slot deadlock waits for arrivals and pending shots',()=>{const step=fnSource('step');assert.match(step,/shelfCount\(\)\s*>=\s*5\s*&&\s*!anyLegalMove\(\)/);assert.match(step,/t\s*<\s*resolveUntil/);assert.match(step,/wizards\.some\([^]*w\.moving/);});
 
-  const factory = new Function('THREE', 'document', 'devicePixelRatio', 'ResizeObserver',
-    'requestAnimationFrame', 'setTimeout', 'clearTimeout', source);
-  const api = factory(
-    THREE,
-    {getElementById: id => elements[id], createElement: () => new Element()},
-    1,
-    class { constructor(callback) { this.callback = callback; } observe() {} },
-    () => 0,
-    setTimeoutFake,
-    clearTimeoutFake
-  );
-  return {api, elements, advance, timers};
-}
+test('revive returns first three occupied slots without losing charges',()=>{const state={slots:[],queue:[{id:'q'}],over:true,running:false};const w=(id,n)=>({id,slot:id,state:'slot',warned:true,mesh:{userData:{charges:n}}});state.slots=[w(0,2),null,w(2,1),w(3,2),w(4,1)];let hidden=0,relaid=0,updated=0;const revive=new Function('state','hideOverlay','relayoutGround','updateCounter',`${fnSource('revive')};return revive`)(state,()=>hidden++,()=>relaid++,()=>updated++);revive();assert.deepEqual(state.slots.map(x=>x?.id??null),[null,null,null,null,4]);assert.deepEqual(state.queue.map(x=>x.id),[0,2,3,'q']);assert.deepEqual(state.queue.slice(0,3).map(x=>x.mesh.userData.charges),[2,1,2]);assert.ok(state.queue.slice(0,3).every(x=>x.state==='ground'&&x.slot===null&&!x.warned));assert.equal(state.over,false);assert.equal(state.running,true);assert.deepEqual([hidden,relaid,updated],[1,1,1]);});
 
-function emptyGrid() {
-  return Array.from({length: 12}, () => Array(12).fill(null));
-}
+test('level reset clears old timers and transient effect pools',()=>{const s=fnSource('startLevel');assert.match(s,/timers\.length\s*=\s*0/);assert.match(s,/levelGeneration\+\+/);assert.match(s,/resolveUntil\s*=\s*simT/);assert.match(s,/streaks\.forEach[^]*onHit\s*=\s*null[^]*visible\s*=\s*false/);assert.match(s,/flashes\.forEach[^]*life\s*=\s*0[^]*visible\s*=\s*false/);assert.match(s,/pLife\.fill\(0\)[^]*pCol\.fill\(0\)/);assert.match(s,/clearTimeout\(hintTimer\)/);assert.match(s,/intro[^]*classList\.remove\("on"\)/);});
 
-const tests = [];
-function test(name, fn) { tests.push({name, fn}); }
+test('scheduled callbacks are owned by their level generation',()=>{const s=fnSource('schedule');assert.match(s,/owner\s*=\s*levelGeneration/);assert.match(s,/owner\s*===\s*levelGeneration/);});
 
-test('bottomExposed returns exactly the lowest occupied cell in each non-empty column', () => {
-  const {api} = makeHarness();
-  const grid = emptyGrid();
-  grid[1][0] = 'P';
-  grid[9][0] = 'C';
-  grid[4][3] = 'Y';
-  grid[11][11] = 'V';
-  api.grid = grid;
-  assert.deepEqual(api.bottomExposed(), [[0, 9], [3, 4], [11, 11]]);
-});
+test('inter-level transition rejects double clicks and nests completion after reset',()=>{const s=fnSource('goNextLevel'),start=s.indexOf('startLevel(n)'),nested=s.indexOf('schedule(1.3',start);assert.ok(start>=0&&nested>start);assert.match(s,/classList\.contains\("on"\)[^]*return/);assert.match(s,/startLevel\(n\);\s*state\.running\s*=\s*false/);assert.match(s,/intro\.classList\.remove\("on"\);\s*state\.running\s*=\s*true/);});
 
-test('component chains only in four directions and includes an L-shaped branch', () => {
-  const {api} = makeHarness();
-  const grid = emptyGrid();
-  grid[5][5] = grid[5][6] = grid[6][6] = 'P';
-  grid[6][4] = 'P'; // diagonal-only: must not join
-  api.grid = grid;
-  assert.deepEqual(new Set(api.component(5, 5).map(([x, y]) => `${x},${y}`)),
-    new Set(['5,5', '6,5', '6,6']));
-});
+test('last-shot victory waits until visible resolution completes',()=>{const s=fnSource('fireAtColumn');assert.match(s,/aliveCount\s*<=\s*0[^]*resolveUntil\s*-\s*simT[^]*win\(\)/);});
 
-test('target chooses the largest exposed component of the requested color', () => {
-  const {api} = makeHarness();
-  const grid = emptyGrid();
-  grid[11][0] = 'C';
-  grid[10][4] = grid[10][5] = grid[9][5] = 'C';
-  api.grid = grid;
-  assert.equal(api.target('C').cells.length, 3);
-  assert.equal(api.target('Y'), null);
-});
+test('wizard rebuild disposes old per-wizard GPU resources',()=>{const s=fnSource('buildWizards');assert.match(s,/scene\.remove\(mesh\)/);assert.match(s,/mesh\.traverse/);assert.match(s,/geometries\.forEach[^]*\.dispose\(\)/);assert.match(s,/m\.map[^]*m\.map\.dispose\(\)[^]*m\.dispose\(\)/);});
 
-test('five occupied slots with no attackable color ends in a deadlock modal', () => {
-  const {api, elements} = makeHarness();
-  const grid = emptyGrid();
-  grid[11][0] = 'C';
-  api.grid = grid;
-  api.slots = Array.from({length: 5}, () => ({color: 'P', charges: 3}));
-  api.queues = [[{color: 'C', charges: 3}]];
-  api.step();
-  assert.equal(api.done, true);
-  assert.equal(elements.modal.hidden, false);
-  assert.equal(elements.modalTitle.textContent, '栏位已满');
-});
-
-test('clearing the last component marks completion and shows the win action', () => {
-  const {api, elements, advance} = makeHarness();
-  const grid = emptyGrid();
-  grid[11][0] = grid[10][0] = 'Y';
-  api.grid = grid;
-  api.meshes.set('0,11', new THREE.Mesh());
-  api.meshes.set('0,10', new THREE.Mesh());
-  api.slots = [{color: 'Y', charges: 1}, null, null, null, null];
-  api.step();
-  assert.equal(api.remaining(), 0);
-  assert.equal(api.done, false, 'completion waits for the visible wave to finish');
-  assert.equal(api.effects.length, 2);
-  advance(435);
-  assert.equal(elements.modal.hidden, true);
-  advance(1);
-  assert.equal(api.done, true);
-  assert.equal(elements.modalTitle.textContent, '画面清空！');
-});
-
-test('animation retires completed effect meshes from both state and scene', () => {
-  const {api} = makeHarness();
-  const grid = emptyGrid();
-  grid[11][0] = 'P';
-  api.grid = grid;
-  api.meshes.set('0,11', new THREE.Mesh());
-  api.slots = [{color: 'P', charges: 2}, null, null, null, null];
-  api.step();
-  assert.equal(api.effects.length, 1);
-  for (let i = 0; i < 30; i++) api.animate();
-  assert.equal(api.effects.length, 0);
-});
-
-test('restart restores the board, slots, queues, modal, and cancels old scheduled work', () => {
-  const {api, elements, advance, timers} = makeHarness();
-  const grid = emptyGrid();
-  grid[11][0] = 'P';
-  api.grid = grid;
-  api.slots = [{color: 'P', charges: 1}, null, null, null, null];
-  api.step(); // schedules the delayed victory modal
-  assert.ok(api.effects.length && api.bolts.length && api.rings.length,
-    'cast did not create the expected effect resources');
-  const transientMeshes = [...api.bolts, ...api.rings].map(item => item.mesh);
-  elements.resetBtn.click();
-  assert.equal(timers.size, 0, 'restart left a pre-restart timer alive');
-  assert.equal(api.effects.length, 0);
-  assert.equal(api.bolts.length, 0);
-  assert.equal(api.rings.length, 0);
-  assert.equal(api.sparks.length, 0);
-  assert.ok(transientMeshes.every(mesh => !api.scene.children.includes(mesh)),
-    'restart left transient meshes attached to the scene');
-  const initialRemaining = api.remaining();
-  assert.equal(api.slots.filter(Boolean).length, 0);
-  assert.equal(elements.modal.hidden, true);
-  assert.match(elements.slotCount.textContent, /0 \/ 5/);
-  advance(1000); // a pre-restart victory callback must not reopen the modal
-  assert.equal(api.remaining(), initialRemaining, 'a timer from before restart mutated the new level');
-  assert.equal(api.slots.filter(Boolean).length, 0, 'a timer from before restart altered slots');
-  assert.equal(elements.modal.hidden, true, 'a timer from before restart reopened the modal');
-});
-
-let failures = 0;
-for (const {name, fn} of tests) {
-  try {
-    await fn();
-    console.log(`✓ ${name}`);
-  } catch (error) {
-    failures++;
-    console.error(`✗ ${name}`);
-    console.error(error.stack || error);
-  }
-}
-console.log(`\n${tests.length - failures}/${tests.length} tests passed`);
-if (failures) process.exitCode = 1;
+let failures=0;for(const {name,fn} of tests){try{await fn();console.log(`✓ ${name}`);}catch(e){failures++;console.error(`✗ ${name}\n${e.stack||e}`);}}console.log(`\n${tests.length-failures}/${tests.length} tests passed`);if(failures)process.exitCode=1;

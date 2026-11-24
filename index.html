@@ -1,3 +1,306 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#17103a"><title>魔法像素 · 五槽实验场</title><style>
-:root{font-family:system-ui,-apple-system,"PingFang SC",sans-serif;color:#fff;background:#140d2c;touch-action:manipulation}*{box-sizing:border-box}body{margin:0;min-height:100dvh;background:radial-gradient(circle at 50% -20%,#7754c2 0,transparent 50%),linear-gradient(#231346,#110c28);overflow-x:hidden}.game{max-width:650px;margin:auto;min-height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom)}header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 2px 8px}.brand{font-size:17px;font-weight:950;letter-spacing:.03em;text-shadow:0 3px #412171}.brand span{color:#ffe17b}.round{border:1px solid #ffffff50;background:#ffffff19;color:#fff;border-radius:12px;padding:9px 12px;font-size:14px;font-weight:700}.hud{display:flex;gap:8px;align-items:center;justify-content:space-between}.badge{padding:7px 12px;border-radius:30px;background:#6e4db5;border:1px solid #ffffff55;box-shadow:inset 0 1px #ffffff55,0 4px #110923;font-weight:800;font-size:14px}.hint{font-size:13px;color:#ded0ff;text-align:right}.board-wrap{position:relative;flex:0 0 auto;height:min(48dvh,470px);min-height:300px;margin:10px 0;border:4px solid #747082;border-radius:18px;overflow:hidden;background:radial-gradient(circle at center,#403263,#241a45);box-shadow:0 16px 30px #09051d,inset 0 0 28px #a6a0ff5c}canvas{display:block;width:100%;height:100%;touch-action:none}.board-label{position:absolute;top:10px;left:12px;background:#120d2da8;border-radius:8px;padding:6px 9px;font-size:13px;font-weight:700;pointer-events:none}.toast{height:25px;text-align:center;font-size:14px;color:#ffe993;font-weight:700}.slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;padding:8px;background:#301f59;border-radius:16px;border:2px solid #a07add;box-shadow:inset 0 3px #ffffff36}.slot{height:54px;display:flex;align-items:center;justify-content:center;position:relative;border:2px solid #735fa9;border-radius:12px;background:#180f34;box-shadow:inset 0 4px 8px #0008;color:#9b8abf;font-weight:900}.orb{width:39px;height:39px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:1000;text-shadow:0 2px 3px #000b;border:2px solid #ffffffa8;box-shadow:inset -5px -8px 6px #0005,inset 3px 4px 5px #fff8,0 4px 8px #0007;font-size:19px}.slot .orb{width:34px;height:34px;font-size:16px}.slot.casting{border-color:#fff6ac;box-shadow:inset 0 4px 8px #0008,0 0 8px #ffeb9166}.orb{position:relative;isolation:isolate}.orb::before{content:"";position:absolute;z-index:-1;top:-12px;left:27%;width:48%;height:15px;clip-path:polygon(50% 0,100% 100%,0 100%);background:linear-gradient(130deg,#f9e7ff,#5c388f);filter:drop-shadow(0 2px 2px #180b31)}@keyframes castPulse{to{transform:translateY(-3px);filter:brightness(1.3)}}.count{position:absolute;right:-5px;top:-6px;background:#fff;color:#21133e;border-radius:9px;font-size:11px;min-width:18px;padding:1px 3px;box-shadow:0 2px #0005}.tray-title{display:flex;justify-content:space-between;margin:10px 2px 6px;color:#e5d7ff;font-size:13px;font-weight:700}.queues{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding-bottom:12px}.queue{border:2px solid #b782e9;border-radius:15px;background:linear-gradient(#583d87,#34235e);min-height:74px;padding:7px 4px;color:white;box-shadow:0 5px #1a1038;cursor:pointer}.queue:active{transform:translateY(3px);box-shadow:0 2px #1a1038}.queue:disabled{opacity:.5;cursor:default}.queue-face{display:flex;gap:3px;justify-content:center;align-items:center}.queue small{display:block;margin-top:4px;font-weight:800;color:#d8c9ff}.next{width:16px;height:16px;border-radius:50%;border:1px solid #fff9;opacity:.85}.modal{position:fixed;inset:0;background:#0b0717c9;display:grid;place-items:center;padding:20px;z-index:10}.modal[hidden]{display:none}.dialog{width:min(100%,390px);padding:25px;background:linear-gradient(145deg,#6e4abe,#332064);border:3px solid #c5a9ff;border-radius:22px;text-align:center;box-shadow:0 20px 60px #0009}.dialog h2{font-size:28px;margin:0 0 10px}.dialog p{line-height:1.5;color:#f4eaff}.action{border:0;border-radius:12px;padding:13px 25px;background:linear-gradient(#b9ff81,#59c651);color:#173c1b;font-size:17px;font-weight:950;box-shadow:0 5px #208b32}.help{position:fixed;inset:0;z-index:11;background:#100a22ef;padding:30px max(24px,calc((100vw - 600px)/2));overflow:auto}.help[hidden]{display:none}.help h2{margin-top:20px}.help p,.help li{line-height:1.65}.help button{margin-top:12px}@media(max-height:690px){.board-wrap{height:44dvh;min-height:240px;margin:6px 0}.slot{height:45px}.queue{min-height:63px}}
-</style></head><body><main class="game"><header><div class="brand">✦ 魔法<span>像素</span></div><div><button class="round" id="helpBtn">规则</button> <button class="round" id="resetBtn">重开</button></div></header><div class="hud"><div class="badge" id="levelText">第 1 关</div><div class="hint" id="progress">剩余像素 · 0</div></div><div class="board-wrap" id="boardWrap"><div class="board-label" id="boardLabel">四方向连锁</div></div><div class="toast" id="toast" aria-live="polite"></div><div class="slots" id="slots" aria-label="五个固定施法栏位"></div><div class="tray-title"><span>选择队首巫师</span><span id="slotCount">施法栏位 0 / 5</span></div><div class="queues" id="queues"></div></main><div class="modal" id="modal" hidden><div class="dialog"><h2 id="modalTitle"></h2><p id="modalBody"></p><button class="action" id="modalAction"></button></div></div><div class="help" id="help" hidden><h2>玩法规则</h2><p>点一个队列，把队首巫师放进五个固定栏位。巫师自动攻击自己颜色中从底部露出的方块。</p><ul><li>同色方块沿上下左右连锁，L 形可以连通，斜角不连通。</li><li>每一列从下往上看，下方方块挡住上方颜色。</li><li>巫师上的数字是可施法次数。没有目标时会留在栏位里。</li><li>清空画板获胜；五槽占满且无人能攻击时失败。</li></ul><button class="action" id="closeHelp">开始游戏</button></div><script type="module" src="./game.js?v=20261124-soft-light"></script></body></html>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Magic Fever — 最小可玩版</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    background: #1a1410;
+    font-family: "Baloo 2", "Nunito", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    user-select: none;
+  }
+  body.noscale #wrap { justify-content: flex-start; align-items: flex-start; }
+  #wrap {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #stage {
+    position: relative;
+    width: 448px; height: 960px; flex: none;
+    transform-origin: center center;
+    box-shadow: 0 0 60px rgba(0,0,0,.8);
+    overflow: hidden;
+  }
+  #gl { position: absolute; inset: 0; width: 448px; height: 960px; display: block; }
+
+  /* ---------- HUD ---------- */
+  #hud { position: absolute; inset: 0; pointer-events: none; }
+  .level-tag {
+    position: absolute; left: 8px; top: 14px;
+    padding: 4px 14px 5px;
+    background: linear-gradient(180deg, #7d8fe0, #5566c4);
+    border: 2px solid #3a4794;
+    border-radius: 12px;
+    color: #fff; font-size: 17px; font-weight: 800;
+    text-shadow: 0 2px 0 rgba(0,0,0,.35);
+    box-shadow: 0 3px 0 rgba(0,0,0,.18), inset 0 2px 0 rgba(255,255,255,.35);
+    letter-spacing: .3px;
+  }
+  .gear {
+    position: absolute; right: 12px; top: 14px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #6b7fd4, #3b478f);
+    border: 2px solid #2c366f;
+    color: #dfe6ff; font-size: 16px; line-height: 26px; text-align: center;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.3), 0 2px 4px rgba(0,0,0,.25);
+  }
+  .scroll {
+    position: absolute; left: 50%; top: 686px;
+    transform: translateX(-50%);
+    width: 116px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, #f7ecc9, #ddc79a);
+    border-top: 2px solid #b89b62; border-bottom: 2px solid #b89b62;
+    border-radius: 4px;
+    box-shadow: 0 3px 6px rgba(0,0,0,.25);
+  }
+  .scroll::before, .scroll::after {
+    content: ""; position: absolute; top: -5px; width: 13px; height: 40px;
+    background: linear-gradient(90deg, #c9ab74, #f3e3bb 40%, #c9ab74);
+    border-radius: 7px; box-shadow: 0 2px 4px rgba(0,0,0,.3);
+  }
+  .scroll::before { left: -9px; }
+  .scroll::after { right: -9px; }
+  #countTxt {
+    font-size: 19px; font-weight: 800; color: #4a3a22;
+    letter-spacing: .5px; text-shadow: 0 1px 0 rgba(255,255,255,.6);
+  }
+  #countTxt.full { color: #b4241f; }
+
+  #err { position:absolute; left:0; right:0; bottom:0; display:none; padding:6px 8px; font:12px/1.4 monospace; color:#ff9090; background:rgba(0,0,0,.75); white-space:pre-wrap; z-index:99; }
+  #hint {
+    position: absolute; left: 0; right: 0; bottom: 10px;
+    text-align: center; color: #fff; font-size: 15px; font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,.55);
+    opacity: 0; transition: opacity .4s;
+  }
+  #hint.show { opacity: .92; }
+
+  /* ---------- overlay ---------- */
+  #overlay {
+    position: absolute; inset: 0; display: none;
+    background: rgba(0,0,0,.62); transition: background .2s;
+  }
+  #overlay.show { display: block; }
+  #overlay > * { transition: opacity .18s; }
+  #overlay.peek { background: rgba(0,0,0,0); }
+  #overlay.peek > .cont { opacity: 0; }
+
+  /* 失败横幅：Out of Space!（红字白底，蓝边） */
+  .banner {
+    position: absolute; left: 0; right: 0; top: 392px; height: 86px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, #f7f9fc, #dbe1ea);
+    border-top: 7px solid #3d5fd8; border-bottom: 7px solid #3d5fd8;
+    box-shadow: 0 -2px 0 #1e2f7a, 0 2px 0 #1e2f7a, 0 10px 22px rgba(0,0,0,.45);
+    color: #8e1b17; font-size: 38px; font-weight: 900; letter-spacing: .2px;
+    animation: bannerMove 1.6s ease-in-out forwards;
+  }
+  .instant .banner { animation: none; }
+  @keyframes bannerMove {
+    0% { transform: translateX(-105%); }
+    16% { transform: translateX(0); }
+    84% { transform: translateX(0); }
+    100% { transform: translateX(105%); }
+  }
+
+  /* Continue? 面板 */
+  .cont {
+    position: absolute; left: 22px; width: 404px; top: 186px;
+    padding: 58px 16px 20px; border-radius: 30px;
+    background: linear-gradient(180deg, #3166e8, #1c3db2);
+    border: 4px solid #122d86;
+    box-shadow: inset 0 0 0 4px #5384f3, 0 16px 34px rgba(0,0,0,.55);
+    animation: popIn .32s cubic-bezier(.2,1.5,.4,1) both;
+  }
+  .cont .tab {
+    position: absolute; left: 50%; top: -18px; transform: translateX(-50%);
+    width: 246px; height: 60px; border-radius: 16px;
+    background: linear-gradient(180deg, #3d70f2, #2047c2);
+    border: 4px solid #122d86; box-shadow: inset 0 3px 0 rgba(255,255,255,.3);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 30px; font-weight: 900; text-shadow: 0 3px 0 #12307a;
+  }
+  .cont .inner {
+    background: #f4ecdb; border-radius: 14px; padding: 58px 0 16px;
+    box-shadow: inset 0 3px 0 rgba(0,0,0,.08);
+  }
+  .mshelf {
+    position: relative; height: 50px; margin: 0 2px;
+    background: linear-gradient(180deg, #5c2c22, #3c1b15);
+    border-top: 3px solid #7a4030;
+    display: flex; justify-content: space-around; align-items: center;
+  }
+  .mtag {
+    position: absolute; left: 50%; bottom: -15px; transform: translateX(-50%);
+    padding: 1px 10px; border-radius: 3px; font-size: 13px; font-weight: 900;
+    background: linear-gradient(180deg, #f7ecc9, #ddc79a); color: #b4241f;
+    border-top: 1px solid #b89b62; border-bottom: 1px solid #b89b62;
+  }
+  .mw {
+    width: 34px; height: 34px; border-radius: 50%; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 900; font-size: 16px;
+    text-shadow: 0 0 3px #000, 0 1px 0 #000;
+    box-shadow: inset 0 -5px 0 rgba(0,0,0,.25), 0 0 0 2px rgba(0,0,0,.4);
+  }
+  .mw i {
+    position: absolute; left: 50%; top: -9px; margin-left: -7px;
+    border-left: 7px solid transparent; border-right: 7px solid transparent;
+    border-bottom: 12px solid #222;
+  }
+  .mw.empty { visibility: hidden; }
+  .mw.off { outline: 2px dashed rgba(255,255,255,.0); }
+  .cont .say {
+    margin-top: 24px; text-align: center;
+    color: #8e1b17; font-size: 16px; font-weight: 900;
+  }
+  .playon {
+    position: relative; margin: 18px auto 0; width: 250px; height: 62px;
+    border-radius: 16px; border: 3px solid #2a7a12;
+    background: linear-gradient(180deg, #8cf04f, #44bf18);
+    box-shadow: 0 5px 0 #23640f, inset 0 3px 0 rgba(255,255,255,.5);
+    display: flex; align-items: center; justify-content: center; padding-right: 54px;
+    color: #fff; font-size: 26px; font-weight: 900; text-shadow: 0 2px 0 rgba(0,0,0,.3);
+    cursor: pointer;
+  }
+  .playon:active, .playbtn:active { transform: translateY(3px); }
+  .free {
+    position: absolute; right: 18px; top: 50%; margin-top: -21px;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #f04848, #b4141c);
+    box-shadow: 0 0 0 3px #8c0d14, 0 0 0 5px #e94a4a;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-style: italic; text-shadow: none;
+    transform: rotate(-12deg);
+  }
+  .hold {
+    position: absolute; left: 0; right: 0; top: 742px; text-align: center;
+    color: #fff; font-size: 18px; font-weight: 900; text-shadow: 0 2px 4px rgba(0,0,0,.8);
+    animation: fadeUp .3s .25s both;
+  }
+
+  /* 通关：WELL DONE! → 金币堆 → meta 进度条 → Play Level N+1 */
+  .welldone {
+    position: absolute; left: 0; right: 0; top: 168px; text-align: center;
+    font-size: 54px; font-weight: 900; color: #fff; letter-spacing: 1px;
+    -webkit-text-stroke: 9px #9e1640; paint-order: stroke fill;
+    text-shadow: 0 5px 0 #5c0a24;
+    transform: rotate(-3deg);
+    animation: stampIn .45s cubic-bezier(.2,1.6,.4,1) both;
+  }
+  .pile {
+    position: absolute; left: 50%; top: 320px; width: 150px; height: 140px; margin-left: -75px;
+    animation: popIn .4s cubic-bezier(.2,1.5,.4,1) .9s both;
+  }
+  .pile .c {
+    position: absolute; width: 64px; height: 30px; border-radius: 50%;
+    background: radial-gradient(ellipse at 45% 35%, #ffe680, #f0b52b 60%, #b27416);
+    box-shadow: 0 5px 0 #a2650f, inset 0 -2px 0 rgba(0,0,0,.15);
+  }
+  .pile .c::after {
+    content: ""; position: absolute; left: 18px; top: 7px; width: 28px; height: 13px; border-radius: 50%;
+    border: 3px solid #d18f1d;
+  }
+  .pile-num {
+    position: absolute; left: 0; right: 0; top: 98px; text-align: center;
+    color: #fff; font-size: 30px; font-weight: 900;
+    -webkit-text-stroke: 5px #2a1c10; paint-order: stroke fill;
+  }
+  .meta {
+    position: absolute; left: 90px; width: 262px; top: 690px; height: 34px;
+    animation: fadeUp .3s 1.5s both;
+  }
+  .meta .bar {
+    position: absolute; inset: 0; border-radius: 17px; overflow: hidden;
+    background: #1d1d22; border: 4px solid #d9dccc;
+    box-shadow: 0 3px 0 rgba(0,0,0,.35);
+  }
+  .meta .fill {
+    position: absolute; left: 0; top: 0; bottom: 0; border-radius: 12px;
+    background: linear-gradient(180deg, #8ef05a, #3fb51a);
+    transition: width .6s ease-out;
+  }
+  .meta span {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 18px; font-weight: 900; text-shadow: 0 1px 2px #000;
+  }
+  .meta .chest {
+    position: absolute; right: -24px; top: -12px; width: 44px; height: 44px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #8a6ad8, #4b2f8f);
+    border: 3px solid #2b1a55;
+    display: flex; align-items: center; justify-content: center;
+    color: #ffd84a; font-size: 22px; font-weight: 900; text-shadow: 0 2px 0 #000;
+  }
+  .playbtn {
+    position: absolute; left: 50%; top: 764px; width: 276px; height: 88px; margin-left: -138px;
+    border-radius: 22px; border: 4px solid #2a7a12;
+    background: linear-gradient(180deg, #8cf04f, #44bf18);
+    box-shadow: 0 6px 0 #23640f, inset 0 3px 0 rgba(255,255,255,.5);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    color: #fff; font-size: 31px; font-weight: 900; text-shadow: 0 2px 0 rgba(0,0,0,.35);
+    cursor: pointer; animation: popIn .35s cubic-bezier(.2,1.5,.4,1) 1.8s both;
+  }
+  .playbtn b { color: #fff04a; }
+  .instant .welldone, .instant .pile, .instant .meta, .instant .playbtn, .instant .cont, .instant .hold { animation: none; }
+  .instant .confetti { display: none; }
+  .confetti {
+    position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+    85% { opacity: 1; }
+    100% { transform: translate(var(--dx), 720px) rotate(var(--rot)); opacity: 0; }
+  }
+  @keyframes popIn { 0% { transform: scale(.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes stampIn { 0% { transform: rotate(-3deg) scale(2.2); opacity: 0; } 100% { transform: rotate(-3deg) scale(1); opacity: 1; } }
+  @keyframes fadeUp { 0% { transform: translateY(14px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+
+  /* 关间过场：淡黑 + Magic Fever 标题 */
+  #intro {
+    position: absolute; inset: 0; background: #0d0a08; opacity: 0; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity .35s;
+  }
+  #intro.on { opacity: 1; pointer-events: auto; }
+  #intro .title {
+    text-align: center; line-height: .95; font-size: 72px; font-weight: 900; color: #ffd84a;
+    -webkit-text-stroke: 10px #5a1f8a; paint-order: stroke fill;
+    text-shadow: 0 7px 0 #2c0d4a, 0 0 40px rgba(255,170,60,.45);
+    transform: rotate(-4deg) scale(.4); opacity: 0;
+  }
+  #intro .title span { display: block; }
+  #intro .title span + span { color: #ff8fd0; }
+  #intro.on .title { animation: titleIn 1.3s cubic-bezier(.2,1.5,.4,1) .1s forwards; }
+  @keyframes titleIn {
+    0% { transform: rotate(-4deg) scale(.4); opacity: 0; }
+    35% { transform: rotate(-4deg) scale(1.08); opacity: 1; }
+    55% { transform: rotate(-4deg) scale(1); opacity: 1; }
+    100% { transform: rotate(-4deg) scale(1.04); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="gl"></canvas>
+    <div id="hud">
+      <div class="level-tag" id="levelTag">Level 1</div>
+      <button class="gear" id="restartBtn" type="button" aria-label="重新开始本关" style="pointer-events:auto;cursor:pointer;padding:0">↻</button>
+      <div class="scroll"><span id="countTxt">0/5</span></div>
+      <div id="hint">点底部的巫师 → 它会自己打出去</div>
+      <div id="err"></div>
+    </div>
+    <div id="overlay"></div>
+    <div id="intro"><div class="title"><span>Magic</span><span>Fever</span></div></div>
+  </div>
+</div>
+
+<script src="./vendor/three.r147.min.js"></script>
+<script src="./game.js?v=standalone-merge-1"></script>
+</body>
+</html>

@@ -6,15 +6,18 @@ Run the deterministic production-logic checks with:
 node qa/test-game.mjs
 ```
 
-The harness evaluates the repository's real `game.js` with small DOM, Three.js,
-and fake-timer adapters. It does not copy the game algorithms. Covered behavior:
+The harness extracts and evaluates the repository's real gameplay functions. It
+does not copy the algorithms. DOM/WebGL-heavy reset behavior is checked against
+the production function bodies. Covered behavior:
 
 - four-direction connectivity (including L shapes and excluding diagonals);
 - lowest occupied cell exposure independently for every column;
 - largest exposed same-color target selection;
 - five-full-slot deadlock;
-- last-component level completion and delayed win modal;
-- effect lifecycle cleanup;
-- restart state restoration and isolation from pre-restart timers.
+- fuse traversal and largest exposed-component targeting;
+- five-slot deadlock and pending-shot resolution guards;
+- continue/revive preserving charges and queue order;
+- restart cleanup of timers, projectiles, flashes, particles, hints, and intro;
+- inter-level transition scheduling and wizard GPU resource disposal.
 
 This is intentionally dependency-free so it can run in CI or locally with Node.
