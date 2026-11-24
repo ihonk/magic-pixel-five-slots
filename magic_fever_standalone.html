@@ -292,7 +292,7 @@
       <div class="level-tag" id="levelTag">Level 1</div>
       <button class="gear" id="restartBtn" type="button" aria-label="重新开始本关" style="pointer-events:auto;cursor:pointer;padding:0">↻</button>
       <div class="scroll"><span id="countTxt">0/5</span></div>
-      <div id="hint">点底部的巫师 → 它会自己打出去</div>
+      <div id="hint">点法师登上传送带 → 对准同色后自动施法</div>
       <div id="err"></div>
     </div>
     <div id="overlay"></div>
@@ -315,7 +315,7 @@
      1) 施法沿「列」纵向命中该列最下方的一块
      2) 同色才可发射（不同色拒绝发射，不消耗）
      3) 命中后按 4-连通（横竖/L型，不含斜向）整块崩解
-     4) 胜利 = 画布清空；失败 = 小径 5 格全满 且 全场无合法落点
+     4) 胜利 = 画布清空；失败 = 传送带 5 人全满 且 全场无合法落点
    ========================================================================= */
 (function () {
   "use strict";
@@ -566,42 +566,15 @@
       }
     }
 
-    // 木架（小径）：5 个暗色窗口 + 木柱，对齐 5 个槽位
+    // Conveyor housing; the moving rubber surface is rendered separately.
     const sy = 594, sh2 = 86;
-    g.fillStyle = "#3E1F14";
-    g.fillRect(0, sy, W, sh2);
-
-    // 窗口（槽位背景）
-    const winW = 66, gap = (W - 5 * winW) / 6;
-    for (let i = 0; i < 5; i++) {
-      const x = gap + i * (winW + gap);
-      const wg = g.createLinearGradient(0, sy + 6, 0, sy + sh2 - 6);
-      wg.addColorStop(0, "#2A120B");
-      wg.addColorStop(1, "#45200F");
-      g.fillStyle = wg;
-      roundRect(g, x, sy + 6, winW, sh2 - 12, 5); g.fill();
-      g.strokeStyle = "rgba(20,8,4,.55)"; g.lineWidth = 2; g.stroke();
+    g.fillStyle = "#291c1a"; g.fillRect(0, sy, W, sh2);
+    const rail = g.createLinearGradient(0, sy, 0, sy + 14);
+    rail.addColorStop(0, "#bc9471"); rail.addColorStop(.4, "#76573f"); rail.addColorStop(1, "#3d2d26");
+    g.fillStyle = rail; g.fillRect(0, sy - 3, W, 12); g.fillRect(0, sy + sh2 - 9, W, 12);
+    for (let x = 14; x < W; x += 42) {
+      g.fillStyle = "#d5b994"; g.beginPath(); g.arc(x, sy + 2, 2, 0, Math.PI * 2); g.fill();
     }
-
-    // 木柱（窗口之间 + 两端）
-    for (let i = 0; i <= 5; i++) {
-      const x = gap / 2 + i * (winW + gap) - 7;
-      const pg = g.createLinearGradient(x, 0, x + 14, 0);
-      pg.addColorStop(0, "#6B3A22");
-      pg.addColorStop(0.45, "#8B5230");
-      pg.addColorStop(1, "#5A2C18");
-      g.fillStyle = pg;
-      roundRect(g, x, sy + 2, 14, sh2 - 4, 4); g.fill();
-    }
-
-    // 上下横梁
-    const beam = g.createLinearGradient(0, sy - 4, 0, sy + 12);
-    beam.addColorStop(0, "#9A5C36");
-    beam.addColorStop(1, "#6A3820");
-    g.fillStyle = beam;
-    roundRect(g, -4, sy - 4, W + 8, 16, 5); g.fill();
-    g.fillStyle = "rgba(255,210,170,.35)";
-    g.fillRect(0, sy - 3, W, 2);
 
     const ledgeY = sy + sh2;
     if (FX.ground) {
@@ -1076,7 +1049,29 @@
   // ---------- 巫师 ----------
   const WIZ_R = 14;
   const SLOT_Y = 626;
-  const SLOT_X = [58, 141, 224, 307, 390];
+  const BELT_LEFT = -48, BELT_LENGTH = W + 96, BELT_SPEED = 48;
+  let beltOffset = 0;
+  function beltPosition(i, offset = beltOffset) {
+    return BELT_LEFT + ((i * BELT_LENGTH / 5 + offset) % BELT_LENGTH + BELT_LENGTH) % BELT_LENGTH;
+  }
+  function makeBelt() {
+    const c = document.createElement("canvas"); c.width = 128; c.height = 64;
+    const g = c.getContext("2d"), fill = g.createLinearGradient(0, 0, 0, 64);
+    fill.addColorStop(0, "#28242c"); fill.addColorStop(.5, "#544148"); fill.addColorStop(1, "#28232b");
+    g.fillStyle = fill; g.fillRect(0, 0, 128, 64);
+    for (let x = 0; x < 128; x += 32) {
+      g.fillStyle = "#17151c"; g.fillRect(x, 0, 2, 64);
+      g.fillStyle = "#7d6260"; g.fillRect(x + 2, 1, 1, 62);
+    }
+    g.strokeStyle = "rgba(222,174,112,.38)"; g.lineWidth = 3;
+    g.beginPath(); g.moveTo(51, 23); g.lineTo(64, 32); g.lineTo(51, 41); g.stroke();
+    const tex = new THREE.CanvasTexture(c); tex.wrapS = THREE.RepeatWrapping;
+    tex.repeat.x = W / 128;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(W, 64), new THREE.MeshBasicMaterial({map:tex,depthTest:false}));
+    mesh.position.set(0, wy(SLOT_Y + 7), -25); mesh.renderOrder = -90; scene.add(mesh);
+    return tex;
+  }
+  const beltTexture = makeBelt();
   // 地面待上场巫师的站位：按人数动态排成多行（每行最多 GROUND_PER_ROW 个，居中），
   // 纵向压缩在 y=762..920 之间，避免人数多时重叠到同一个点
   const GROUND_PER_ROW = 5, GROUND_X0 = 224, GROUND_DX = 76, GROUND_Y0 = 762, GROUND_SPAN = 158;
@@ -1205,7 +1200,25 @@
 
   const wizards = [];   // {mesh, slot|null, state: 'ground'|'slot'|'leaving'|'gone', ...}
 
-  function slotPos(i) { return { x: SLOT_X[i], y: SLOT_Y }; }
+  function slotPos(i) { return { x: beltPosition(i), y: SLOT_Y }; }
+
+  function columnUnderWizard(w) {
+    const x = w.mesh.position.x + W / 2;
+    if (x < BX || x >= BX + BW) return -1;
+    return Math.floor((x - BX) / CW);
+  }
+
+  function advanceBelt(dt) {
+    if (!state.running || state.over) return;
+    beltOffset = (beltOffset + BELT_SPEED * dt) % BELT_LENGTH;
+    beltTexture.offset.x = -beltOffset / 128;
+    for (let i = 0; i < 5; i++) {
+      const w = state.slots[i]; if (!w) continue;
+      const x = wx(beltPosition(i));
+      if (w.moving) w.target.x = x;
+      else w.mesh.position.x = x;
+    }
+  }
 
   function placeInSlot(w, i, animate) {
     const p = slotPos(i);
@@ -1368,6 +1381,7 @@
     levelGeneration++;
     timers.length = 0;
     resolveUntil = simT;
+    beltOffset = 0; beltTexture.offset.x = 0;
     acc = 0;
     shakeT = 0;
     camera.position.x = camera.position.y = 0;
@@ -1421,7 +1435,7 @@
     updateCounter();
     hideHint(true);
     const lvAtStart = n;
-    schedule(0.9, function () { if (state.level === lvAtStart && !state.over) showHint("点底部的巫师，它会自己飞上去打掉能消的方块"); });
+    schedule(0.9, function () { if (state.level === lvAtStart && !state.over) showHint("点法师登上传送带，移动到同色像素下方时自动施法"); });
   }
 
   // ---------- 提示 ----------
@@ -1443,8 +1457,13 @@
     if (state.over || !state.running) return false;
     if (w.slot !== null || w.state !== "ground") return false;
     let idx = -1;
-    for (let i = 0; i < 5; i++) if (!state.slots[i]) { idx = i; break; }
-    if (idx < 0) { showHint("小径满了，先等场上的巫师打完"); return false; }
+    let leftmost = Infinity;
+    for (let i = 0; i < 5; i++) if (!state.slots[i]) {
+      const x = beltPosition(i);
+      const priority = x >= 24 && x <= W - 24 ? x : x + BELT_LENGTH;
+      if (priority < leftmost) { leftmost = priority; idx = i; }
+    }
+    if (idx < 0) { showHint("传送带已满，先等法师完成施法"); return false; }
     state.queue = state.queue.filter(function (x) { return x !== w; });
     state.slots[idx] = w;
     placeInSlot(w, idx, true);
@@ -1453,24 +1472,14 @@
     return true;
   }
 
-  // 选哪一列：同色连通块最大的那一列（同样大就取最左）
-  function bestColumnForColor(colorKey) {
-    let best = -1, bestSize = -1;
-    for (let i = 0; i < NX; i++) {
-      const k = bottomOfColumn(i);
-      if (k < 0 || grid[k].color !== colorKey) continue;
-      const size = componentFrom(k).length;
-      if (size > bestSize) { bestSize = size; best = i; }
-    }
-    return best;
-  }
-
   function autoFire(w) {
     if (!w || w.state !== "slot" || w.moving) return false;
     if (w.mesh.userData.charges <= 0) return false;
     if (w.cooldown > 0) return false;
-    const col = bestColumnForColor(w.mesh.userData.colorKey);
+    const col = columnUnderWizard(w);
     if (col < 0) return false;
+    const cell = bottomOfColumn(col);
+    if (cell < 0 || grid[cell].color !== w.mesh.userData.colorKey) return false;
     w.cooldown = 0.85;
     fireAtColumn(w, col);
     return true;
@@ -1486,9 +1495,9 @@
     for (let i = 0; i < 5; i++) {
       const w = state.slots[i];
       if (!w) continue;
-      if (!w.warned && !w.moving && bestColumnForColor(w.mesh.userData.colorKey) < 0) {
+      if (!w.warned && !w.moving && legalColumnsForColor(w.mesh.userData.colorKey).length === 0) {
         w.warned = true;
-        showHint("这个颜色现在被别的颜色挡住了，先打别的颜色");
+        showHint("这个颜色暂时被挡住了，法师会随传送带继续寻找");
       }
       autoFire(w);
     }
@@ -1544,12 +1553,14 @@
 
   // ---------- 发射 ----------
   function fireAtColumn(w, col) {
+    if (!w || w.state !== "slot" || w.moving || w.mesh.userData.charges <= 0 || col !== columnUnderWizard(w)) return false;
     const k = bottomOfColumn(col);
     if (k < 0) return false;
     if (grid[k].color !== w.mesh.userData.colorKey) return false;
 
     const slot = w.slot;
-    const targetX = BX + (col + 0.5) * CW;
+    const targetX = w.mesh.position.x + W / 2;
+    const sourceY = H / 2 - w.mesh.position.y - 12;
     const targetDesignY = BY + ((k - (k % NX)) / NX + 0.5) * CH;
     const colorKey = grid[k].color;
     const base = PALETTE[colorKey];
@@ -1564,8 +1575,8 @@
     // 发射瞬间：巫师身上炸一团光
     sfx.fire();
     if (slot !== null) {
-      fireFlash(SLOT_X[slot], SLOT_Y - 4, base, 40);
-      burstAt(wx(SLOT_X[slot]), wy(SLOT_Y - 4), base, 10);
+      fireFlash(targetX, sourceY, base, 40);
+      burstAt(wx(targetX), wy(sourceY), base, 10);
     }
 
     // 发射瞬间就把这批格子标记为「已被吃掉」，避免 0.1 秒飞行期间被另一发重复命中
@@ -1575,7 +1586,7 @@
     });
 
     // 光弹飞行 → 命中后才开始燃
-    fireStreak(targetX, SLOT_Y - 8, targetDesignY, 0xfff4d0, function () {
+    fireStreak(targetX, sourceY, targetDesignY, 0xfff4d0, function () {
       fireFlash(targetX, targetDesignY, 0xffffff, 52);
       burstAt(wx(targetX), wy(targetDesignY), base, 16);
       shake(6, 0.26);
@@ -1862,6 +1873,8 @@
       if (f.life <= 0) f.sprite.visible = false;
     }
 
+    advanceBelt(dt);
+
     // 巫师入场 / 待机呼吸
     for (let i = 0; i < wizards.length; i++) {
       const w = wizards[i];
@@ -1997,6 +2010,7 @@
 
   window.__mf = {
     state: state, grid: grid, startLevel: startLevel,
+    beltPosition: beltPosition, columnUnderWizard: columnUnderWizard,
     step: step, fire: fireAtColumn, send: sendToSlot, wizards: wizards,
     win: win, fail: fail, revive: revive, FX: FX
   };

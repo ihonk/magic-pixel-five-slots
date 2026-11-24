@@ -15,6 +15,8 @@ the production function bodies. Covered behavior:
 - largest exposed same-color target selection;
 - five-full-slot deadlock;
 - fuse traversal and largest exposed-component targeting;
+- cyclic belt spacing/wrapping, current-position column mapping, and vertical fire alignment;
+- five-carrier capacity plus belt offset/texture reset;
 - five-slot deadlock and pending-shot resolution guards;
 - continue/revive preserving charges and queue order;
 - restart cleanup of timers, projectiles, flashes, particles, hints, and intro;
