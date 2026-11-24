@@ -21,6 +21,13 @@ class Element {
   append(...items) { this.children.push(...items); }
   replaceChildren(...items) { this.children = [...items]; }
   click() { this.onclick?.(); }
+  getContext() {
+    return {
+      fillStyle: null,
+      createRadialGradient() { return {addColorStop() {}}; },
+      fillRect() {}
+    };
+  }
 }
 
 class Vec3 {
@@ -73,8 +80,12 @@ const THREE = {
   PointLight: class extends Object3D {},
   Group: class extends Object3D {},
   BoxGeometry: class { dispose() {} },
+  PlaneGeometry: class { dispose() {} },
+  ExtrudeGeometry: class { dispose() {} },
   TorusGeometry: class { dispose() {} },
   CylinderGeometry: class { dispose() {} },
+  Shape: class { moveTo() {} lineTo() {} closePath() {} },
+  CanvasTexture: class { constructor(canvas) { this.image = canvas; } dispose() {} },
   MeshStandardMaterial: class {
     constructor(options = {}) { Object.assign(this, options); }
     clone() { return new this.constructor({...this}); }
@@ -86,6 +97,12 @@ const THREE = {
     dispose() {}
   },
   Mesh: class extends Object3D { constructor(geometry, material) { super(); this.geometry = geometry; this.material = material; } },
+  Sprite: class extends Object3D { constructor(material) { super(); this.material = material; } },
+  SpriteMaterial: class {
+    constructor(options = {}) { Object.assign(this, options); }
+    clone() { return new this.constructor({...this}); }
+    dispose() { this.disposed = true; }
+  },
   Clock,
   Vector3: Vec3,
   SRGBColorSpace: 'srgb',
@@ -131,7 +148,8 @@ function makeHarness() {
     get slots(){return slots}, set slots(v){slots=v},
     get queues(){return queues}, set queues(v){queues=v},
     get busy(){return busy}, get done(){return done},
-    get effects(){return effects}, get meshes(){return meshes},
+    get effects(){return effects}, get bolts(){return bolts}, get sparks(){return sparks},
+    get rings(){return rings}, get meshes(){return meshes}, get scene(){return scene},
     get levelIndex(){return levelIndex}
   };`;
 
@@ -212,7 +230,7 @@ test('clearing the last component marks completion and shows the win action', ()
   assert.equal(api.remaining(), 0);
   assert.equal(api.done, false, 'completion waits for the visible wave to finish');
   assert.equal(api.effects.length, 2);
-  advance(661);
+  advance(435);
   assert.equal(elements.modal.hidden, true);
   advance(1);
   assert.equal(api.done, true);
@@ -239,8 +257,17 @@ test('restart restores the board, slots, queues, modal, and cancels old schedule
   api.grid = grid;
   api.slots = [{color: 'P', charges: 1}, null, null, null, null];
   api.step(); // schedules the delayed victory modal
+  assert.ok(api.effects.length && api.bolts.length && api.rings.length,
+    'cast did not create the expected effect resources');
+  const transientMeshes = [...api.bolts, ...api.rings].map(item => item.mesh);
   elements.resetBtn.click();
   assert.equal(timers.size, 0, 'restart left a pre-restart timer alive');
+  assert.equal(api.effects.length, 0);
+  assert.equal(api.bolts.length, 0);
+  assert.equal(api.rings.length, 0);
+  assert.equal(api.sparks.length, 0);
+  assert.ok(transientMeshes.every(mesh => !api.scene.children.includes(mesh)),
+    'restart left transient meshes attached to the scene');
   const initialRemaining = api.remaining();
   assert.equal(api.slots.filter(Boolean).length, 0);
   assert.equal(elements.modal.hidden, true);
