@@ -1050,6 +1050,8 @@
   const WIZ_R = 14;
   const SLOT_Y = 626;
   const BELT_LEFT = -48, BELT_LENGTH = W + 96, BELT_SPEED = 48;
+  // 传送带整体提速 50%；终局（剩余巫师全部在带上且都能消除）再快 50%
+  const BELT_BOOST = 1.5, BELT_RUSH = BELT_BOOST * 1.5;
   let beltOffset = 0;
   function beltPosition(i, offset = beltOffset) {
     return BELT_LEFT + ((i * BELT_LENGTH / 5 + offset) % BELT_LENGTH + BELT_LENGTH) % BELT_LENGTH;
@@ -1229,9 +1231,24 @@
     return Math.floor((x - BX) / CW);
   }
 
+  // 终局判定：剩余巫师全部已上带（无地面待命、已落稳），且每个都还有可消除的颜色
+  function beltRush() {
+    let n = 0;
+    for (let i = 0; i < wizards.length; i++) {
+      const w = wizards[i];
+      if (w.state === "gone" || w.state === "leaving") continue;
+      if (w.state !== "slot" || w.moving) return false;
+      if (w.mesh.userData.charges <= 0) return false;
+      if (legalColumnsForColor(w.mesh.userData.colorKey).length === 0) return false;
+      n++;
+    }
+    return n > 0;
+  }
+
   function advanceBelt(dt) {
     if (!state.running || state.over) return;
-    beltOffset = (beltOffset + BELT_SPEED * dt) % BELT_LENGTH;
+    const rate = beltRush() ? BELT_RUSH : BELT_BOOST;
+    beltOffset = (beltOffset + BELT_SPEED * rate * dt) % BELT_LENGTH;
     syncBeltTexture();
     for (let i = 0; i < 5; i++) {
       const w = state.slots[i]; if (!w) continue;
