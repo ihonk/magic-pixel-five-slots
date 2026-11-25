@@ -745,23 +745,44 @@
     return BELT_LEFT + ((i * BELT_LENGTH / 5 + offset) % BELT_LENGTH + BELT_LENGTH) % BELT_LENGTH;
   }
   function makeBelt() {
-    const c = document.createElement("canvas"); c.width = 128; c.height = 64;
-    const g = c.getContext("2d"), fill = g.createLinearGradient(0, 0, 0, 64);
-    fill.addColorStop(0, "#28242c"); fill.addColorStop(.5, "#544148"); fill.addColorStop(1, "#28232b");
-    g.fillStyle = fill; g.fillRect(0, 0, 128, 64);
-    for (let x = 0; x < 128; x += 32) {
-      g.fillStyle = "#17151c"; g.fillRect(x, 0, 2, 64);
-      g.fillStyle = "#7d6260"; g.fillRect(x + 2, 1, 1, 62);
+    // 纹理周期 = 一整圈传送带，正好均分五块区域，每块跟着对应槽位一起走
+    const TW = 1024, TH = 128;            // 2 的幂，保证 RepeatWrapping 兼容
+    const UNIT = TW / 5;
+    const c = document.createElement("canvas"); c.width = TW; c.height = TH;
+    const g = c.getContext("2d");
+
+    function band(x, light) {
+      const fill = g.createLinearGradient(0, 0, 0, TH);
+      if (light) {
+        fill.addColorStop(0, "#4a3f52"); fill.addColorStop(.46, "#836574"); fill.addColorStop(1, "#463c4a");
+      } else {
+        fill.addColorStop(0, "#1c1820"); fill.addColorStop(.46, "#3c2e36"); fill.addColorStop(1, "#1a161c");
+      }
+      g.fillStyle = fill; g.fillRect(x, 0, UNIT, TH);
+      g.fillStyle = "rgba(255,255,255,.07)"; g.fillRect(x, 0, UNIT, 2);
+      g.fillStyle = "rgba(0,0,0,.30)"; g.fillRect(x, TH - 4, UNIT, 4);
     }
-    g.strokeStyle = "rgba(222,174,112,.38)"; g.lineWidth = 3;
-    g.beginPath(); g.moveTo(51, 23); g.lineTo(64, 32); g.lineTo(51, 41); g.stroke();
+    function seam(x) {
+      g.fillStyle = "#17151c"; g.fillRect(x - 2, 0, 4, TH);
+      g.fillStyle = "rgba(214,176,140,.30)"; g.fillRect(x + 2, 0, 1, TH);
+    }
+
+    // 区域 i 的中心对准槽位 i；i=0 的色块跨过纹理接缝，左右各补一份
+    for (let i = 0; i < 5; i++) {
+      for (let s = -1; s <= 1; s++) band(i * UNIT - UNIT / 2 + s * TW, i % 2 === 0);
+    }
+    for (let i = 0; i < 5; i++) seam((i + 0.5) * UNIT);
+
     const tex = new THREE.CanvasTexture(c); tex.wrapS = THREE.RepeatWrapping;
-    tex.repeat.x = W / 128;
+    tex.repeat.x = W / BELT_LENGTH;
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(W, 64), new THREE.MeshBasicMaterial({map:tex,depthTest:false}));
     mesh.position.set(0, wy(SLOT_Y + 7), -25); mesh.renderOrder = -90; scene.add(mesh);
     return tex;
   }
   const beltTexture = makeBelt();
+  function syncBeltTexture() {
+    beltTexture.offset.x = (-BELT_LEFT - beltOffset) / BELT_LENGTH;
+  }
   // 地面待上场巫师的站位：按人数动态排成多行（每行最多 GROUND_PER_ROW 个，居中），
   // 纵向压缩在 y=762..920 之间，避免人数多时重叠到同一个点
   const GROUND_PER_ROW = 5, GROUND_X0 = 224, GROUND_DX = 76, GROUND_Y0 = 762, GROUND_SPAN = 158;
@@ -901,7 +922,7 @@
   function advanceBelt(dt) {
     if (!state.running || state.over) return;
     beltOffset = (beltOffset + BELT_SPEED * dt) % BELT_LENGTH;
-    beltTexture.offset.x = -beltOffset / 128;
+    syncBeltTexture();
     for (let i = 0; i < 5; i++) {
       const w = state.slots[i]; if (!w) continue;
       const x = wx(beltPosition(i));
@@ -1071,7 +1092,7 @@
     levelGeneration++;
     timers.length = 0;
     resolveUntil = simT;
-    beltOffset = 0; beltTexture.offset.x = 0;
+    beltOffset = 0; syncBeltTexture();
     acc = 0;
     shakeT = 0;
     camera.position.x = camera.position.y = 0;
