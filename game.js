@@ -921,18 +921,17 @@
     return Math.floor((x - BX) / CW);
   }
 
-  // 终局判定：剩余巫师全部已上带（无地面待命、已落稳），且每个都还有可消除的颜色
+  // 终局判定：地面已无待命巫师（全部上带并落稳），且带上至少有一名巫师能立即消除
   function beltRush() {
-    let n = 0;
+    let ready = 0;
     for (let i = 0; i < wizards.length; i++) {
       const w = wizards[i];
       if (w.state === "gone" || w.state === "leaving") continue;
       if (w.state !== "slot" || w.moving) return false;
-      if (w.mesh.userData.charges <= 0) return false;
-      if (legalColumnsForColor(w.mesh.userData.colorKey).length === 0) return false;
-      n++;
+      if (w.mesh.userData.charges <= 0) continue;
+      if (legalColumnsForColor(w.mesh.userData.colorKey).length > 0) ready++;
     }
-    return n > 0;
+    return ready > 0;
   }
 
   function advanceBelt(dt) {
