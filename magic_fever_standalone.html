@@ -1050,8 +1050,8 @@
   const WIZ_R = 14;
   const SLOT_Y = 626;
   const BELT_LEFT = -48, BELT_LENGTH = W + 96, BELT_SPEED = 48;
-  // 传送带整体提速 50%；终局（剩余巫师全部在带上且都能消除）再快 50%
-  const BELT_BOOST = 1.5, BELT_RUSH = BELT_BOOST * 1.5;
+  // 传送带整体提速 50%；终局（剩余巫师全部在带上且至少一名有可消除目标）提速到 200 px/s
+  const BELT_BOOST = 1.5, BELT_RUSH = 200 / BELT_SPEED;
   let beltOffset = 0;
   function beltPosition(i, offset = beltOffset) {
     return BELT_LEFT + ((i * BELT_LENGTH / 5 + offset) % BELT_LENGTH + BELT_LENGTH) % BELT_LENGTH;
