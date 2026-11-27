@@ -42,188 +42,52 @@
   "lanes": [
     [
       {
-        "color": "R",
-        "charges": 1
-      },
-      {
-        "color": "R",
-        "charges": 1
+        "color": "Y",
+        "charges": 5
       },
       {
         "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "P",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "G",
-        "charges": 1
-      },
-      {
-        "color": "G",
-        "charges": 1
-      },
-      {
-        "color": "P",
-        "charges": 1
-      },
-      {
-        "color": "R",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "G",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "G",
-        "charges": 1
-      },
-      {
-        "color": "G",
-        "charges": 1
-      },
-      {
-        "color": "P",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
+        "charges": 5
       }
     ],
     [
       {
         "color": "Y",
-        "charges": 1
+        "charges": 5
       },
       {
         "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 2
-      },
-      {
-        "color": "R",
-        "charges": 1
-      },
-      {
-        "color": "R",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 2
-      },
-      {
-        "color": "B",
-        "charges": 1
+        "charges": 5
       },
       {
         "color": "P",
-        "charges": 1
+        "charges": 3
       },
       {
         "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
+        "charges": 5
       }
     ],
     [
       {
-        "color": "P",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "B",
-        "charges": 1
-      },
-      {
-        "color": "P",
-        "charges": 1
-      },
-      {
         "color": "R",
-        "charges": 2
+        "charges": 5
       },
       {
         "color": "P",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
+        "charges": 4
       },
       {
         "color": "G",
-        "charges": 1
+        "charges": 4
+      },
+      {
+        "color": "R",
+        "charges": 4
       },
       {
         "color": "B",
-        "charges": 1
-      },
-      {
-        "color": "Y",
-        "charges": 1
+        "charges": 3
       }
     ]
   ],
@@ -232,12 +96,12 @@
       "id": "A",
       "members": [
         [
-          0,
-          0
+          2,
+          4
         ],
         [
-          2,
-          0
+          1,
+          2
         ]
       ]
     }
@@ -245,17 +109,17 @@
   "locks": [
     {
       "id": "L1",
-      "x": 19,
-      "y": 6,
+      "x": 3,
+      "y": 21,
       "width": 4,
       "height": 3,
-      "color": "G",
+      "color": "R",
       "hits": 2
     }
   ],
   "generation": {
     "seed": "DESSERT-DONUT-alternating-0",
-    "attempt": 3,
+    "attempt": 13,
     "difficulty": "normal",
     "rhythm": "alternating",
     "target": [
@@ -271,9 +135,9 @@
     "lockHits": 2,
     "lockColor": "random",
     "candidates": 24,
-    "passedCandidates": 22,
-    "rhythmMatchedCandidates": 10,
-    "fitError": 0.134,
+    "passedCandidates": 18,
+    "rhythmMatchedCandidates": 15,
+    "fitError": 0.125,
     "theme": "dessert",
     "template": "donut-v1",
     "experimentalTemplate": true
@@ -282,669 +146,619 @@
     "pixels": 484,
     "components": 44,
     "lockShots": 2,
-    "wizards": 45
+    "wizards": 11
   },
   "verification": {
     "status": "passed",
     "engine": "production-game-60hz",
-    "seconds": 29.52,
+    "seconds": 41.95,
     "peakOccupancy": 5,
     "actions": [
       {
         "time": 0.016667,
-        "id": "L2-0"
+        "id": "L0-0"
       },
       {
         "time": 0.416667,
-        "id": "L2-1"
-      },
-      {
-        "time": 0.833333,
         "id": "L1-0"
       },
       {
-        "time": 1.233333,
-        "id": "L0-1"
-      },
-      {
-        "time": 1.65,
+        "time": 0.833333,
         "id": "L1-1"
       },
       {
-        "time": 2.066667,
-        "id": "L0-2"
+        "time": 1.233333,
+        "id": "L2-0"
       },
       {
-        "time": 2.483333,
+        "time": 1.65,
+        "id": "L0-1"
+      },
+      {
+        "time": 4,
+        "id": "L2-1"
+      },
+      {
+        "time": 5.366667,
         "id": "L2-2"
       },
       {
-        "time": 2.9,
+        "time": 10.983333,
         "id": "L2-3"
       },
       {
-        "time": 3.316667,
-        "id": "L0-3"
-      },
-      {
-        "time": 3.733333,
-        "id": "L2-4"
-      },
-      {
-        "time": 4.583333,
-        "id": "L0-4"
-      },
-      {
-        "time": 4.983333,
+        "time": 25.65,
         "id": "L1-2"
       },
       {
-        "time": 5.383333,
-        "id": "L0-5"
-      },
-      {
-        "time": 5.8,
-        "id": "L2-5"
-      },
-      {
-        "time": 6.2,
-        "id": "L0-6"
-      },
-      {
-        "time": 6.616667,
+        "time": 35,
         "id": "L1-3"
-      },
-      {
-        "time": 7.016667,
-        "id": "L0-7"
-      },
-      {
-        "time": 7.416667,
-        "id": "L1-4"
-      },
-      {
-        "time": 7.833333,
-        "id": "L0-8"
-      },
-      {
-        "time": 8.25,
-        "id": "L1-5"
-      },
-      {
-        "time": 8.65,
-        "id": "L0-9"
-      },
-      {
-        "time": 9.05,
-        "id": "L1-6"
-      },
-      {
-        "time": 9.466667,
-        "id": "L2-6"
-      },
-      {
-        "time": 9.866667,
-        "id": "L2-7"
-      },
-      {
-        "time": 10.266667,
-        "id": "L2-8"
-      },
-      {
-        "time": 11.4,
-        "id": "L1-7"
-      },
-      {
-        "time": 13.066667,
-        "id": "L2-9"
-      },
-      {
-        "time": 13.466667,
-        "id": "L1-8"
-      },
-      {
-        "time": 14.716667,
-        "id": "L0-10"
-      },
-      {
-        "time": 15.366667,
-        "id": "L2-10"
-      },
-      {
-        "time": 18.1,
-        "id": "L0-11"
-      },
-      {
-        "time": 18.516667,
-        "id": "L1-9"
-      },
-      {
-        "time": 18.916667,
-        "id": "L2-11"
-      },
-      {
-        "time": 19.383333,
-        "id": "L2-12"
-      },
-      {
-        "time": 20.55,
-        "id": "L1-10"
-      },
-      {
-        "time": 21.4,
-        "id": "L1-11"
-      },
-      {
-        "time": 21.8,
-        "id": "L2-13"
-      },
-      {
-        "time": 22.216667,
-        "id": "L0-12"
-      },
-      {
-        "time": 22.916667,
-        "id": "L2-14"
-      },
-      {
-        "time": 23.566667,
-        "id": "L1-12"
-      },
-      {
-        "time": 23.983333,
-        "id": "L0-13"
-      },
-      {
-        "time": 24.566667,
-        "id": "L1-13"
-      },
-      {
-        "time": 25.3,
-        "id": "L0-14"
-      },
-      {
-        "time": 26.083333,
-        "id": "L0-15"
       }
     ],
     "samples": [
       {
         "progress": 0,
-        "pressure": 37
+        "pressure": 34
       },
       {
-        "progress": 0,
-        "pressure": 40
+        "progress": 0.012396694214875992,
+        "pressure": 45
       },
       {
-        "progress": 0.01446280991735538,
-        "pressure": 36
+        "progress": 0.030991735537190035,
+        "pressure": 45
       },
       {
-        "progress": 0.1652892561983471,
-        "pressure": 37
+        "progress": 0.04132231404958675,
+        "pressure": 52
       },
       {
-        "progress": 0.17561983471074383,
-        "pressure": 36
+        "progress": 0.05371900826446285,
+        "pressure": 50
       },
       {
-        "progress": 0.17561983471074383,
-        "pressure": 38
+        "progress": 0.12190082644628097,
+        "pressure": 51
       },
       {
-        "progress": 0.25619834710743805,
-        "pressure": 40
+        "progress": 0.1301652892561983,
+        "pressure": 51
       },
       {
-        "progress": 0.25619834710743805,
-        "pressure": 42
+        "progress": 0.21074380165289253,
+        "pressure": 47
       },
       {
-        "progress": 0.25619834710743805,
-        "pressure": 42
+        "progress": 0.21074380165289253,
+        "pressure": 50
       },
       {
-        "progress": 0.25826446280991733,
-        "pressure": 35
+        "progress": 0.2128099173553719,
+        "pressure": 52
       },
       {
-        "progress": 0.3223140495867769,
-        "pressure": 30
+        "progress": 0.28099173553719003,
+        "pressure": 63
       },
       {
-        "progress": 0.32644628099173556,
-        "pressure": 39
+        "progress": 0.28099173553719003,
+        "pressure": 63
       },
       {
-        "progress": 0.3326446280991735,
-        "pressure": 39
+        "progress": 0.28099173553719003,
+        "pressure": 63
       },
       {
-        "progress": 0.3450413223140496,
-        "pressure": 37
+        "progress": 0.28099173553719003,
+        "pressure": 63
       },
       {
-        "progress": 0.3471074380165289,
-        "pressure": 39
+        "progress": 0.28099173553719003,
+        "pressure": 63
       },
       {
-        "progress": 0.3471074380165289,
-        "pressure": 42
+        "progress": 0.34917355371900827,
+        "pressure": 46
       },
       {
-        "progress": 0.48347107438016534,
-        "pressure": 26
+        "progress": 0.34917355371900827,
+        "pressure": 46
       },
       {
-        "progress": 0.5392561983471074,
-        "pressure": 25
+        "progress": 0.4194214876033058,
+        "pressure": 47
       },
       {
-        "progress": 0.5392561983471074,
+        "progress": 0.4194214876033058,
+        "pressure": 47
+      },
+      {
+        "progress": 0.4855371900826446,
+        "pressure": 46
+      },
+      {
+        "progress": 0.49173553719008267,
+        "pressure": 48
+      },
+      {
+        "progress": 0.5475206611570248,
         "pressure": 31
       },
       {
-        "progress": 0.5454545454545454,
-        "pressure": 33
-      },
-      {
-        "progress": 0.615702479338843,
-        "pressure": 32
-      },
-      {
-        "progress": 0.6198347107438016,
+        "progress": 0.5537190082644627,
         "pressure": 30
       },
       {
-        "progress": 0.6301652892561984,
-        "pressure": 29
-      },
-      {
-        "progress": 0.6301652892561984,
-        "pressure": 29
-      },
-      {
-        "progress": 0.6301652892561984,
-        "pressure": 29
-      },
-      {
-        "progress": 0.6301652892561984,
-        "pressure": 29
-      },
-      {
-        "progress": 0.6983471074380165,
+        "progress": 0.5537190082644627,
         "pressure": 30
       },
       {
-        "progress": 0.6983471074380165,
-        "pressure": 30
+        "progress": 0.5599173553719008,
+        "pressure": 34
       },
       {
-        "progress": 0.6983471074380165,
-        "pressure": 30
+        "progress": 0.5599173553719008,
+        "pressure": 34
       },
       {
-        "progress": 0.7066115702479339,
-        "pressure": 62
+        "progress": 0.5599173553719008,
+        "pressure": 34
       },
       {
-        "progress": 0.7747933884297521,
-        "pressure": 62
+        "progress": 0.5599173553719008,
+        "pressure": 34
       },
       {
-        "progress": 0.7747933884297521,
-        "pressure": 62
+        "progress": 0.5599173553719008,
+        "pressure": 34
       },
       {
-        "progress": 0.7747933884297521,
-        "pressure": 62
+        "progress": 0.5599173553719008,
+        "pressure": 34
       },
       {
-        "progress": 0.78099173553719,
-        "pressure": 30
-      },
-      {
-        "progress": 0.78099173553719,
-        "pressure": 30
-      },
-      {
-        "progress": 0.78099173553719,
-        "pressure": 30
-      },
-      {
-        "progress": 0.8533057851239669,
-        "pressure": 24
-      },
-      {
-        "progress": 0.8533057851239669,
-        "pressure": 30
-      },
-      {
-        "progress": 0.859504132231405,
-        "pressure": 40
-      },
-      {
-        "progress": 0.859504132231405,
-        "pressure": 40
-      },
-      {
-        "progress": 0.859504132231405,
-        "pressure": 40
-      },
-      {
-        "progress": 0.859504132231405,
-        "pressure": 40
-      },
-      {
-        "progress": 0.9276859504132231,
-        "pressure": 23
-      },
-      {
-        "progress": 0.9380165289256198,
-        "pressure": 24
-      },
-      {
-        "progress": 0.9442148760330579,
-        "pressure": 27
-      },
-      {
-        "progress": 0.9524793388429752,
+        "progress": 0.628099173553719,
         "pressure": 28
       },
       {
-        "progress": 0.9524793388429752,
+        "progress": 0.628099173553719,
         "pressure": 28
       },
       {
-        "progress": 0.9545454545454546,
-        "pressure": 23
+        "progress": 0.628099173553719,
+        "pressure": 28
       },
       {
-        "progress": 0.9545454545454546,
-        "pressure": 23
+        "progress": 0.7004132231404958,
+        "pressure": 26
       },
       {
-        "progress": 0.9566115702479339,
+        "progress": 0.7004132231404958,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7665289256198347,
+        "pressure": 25
+      },
+      {
+        "progress": 0.7747933884297521,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7747933884297521,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7747933884297521,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7747933884297521,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7768595041322314,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7768595041322314,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7768595041322314,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7933884297520661,
+        "pressure": 60
+      },
+      {
+        "progress": 0.7995867768595042,
+        "pressure": 59
+      },
+      {
+        "progress": 0.7995867768595042,
+        "pressure": 59
+      },
+      {
+        "progress": 0.7995867768595042,
+        "pressure": 59
+      },
+      {
+        "progress": 0.7995867768595042,
+        "pressure": 59
+      },
+      {
+        "progress": 0.7995867768595042,
+        "pressure": 59
+      },
+      {
+        "progress": 0.7995867768595042,
+        "pressure": 59
+      },
+      {
+        "progress": 0.7995867768595042,
+        "pressure": 59
+      },
+      {
+        "progress": 0.865702479338843,
         "pressure": 24
       },
       {
-        "progress": 0.9607438016528925,
-        "pressure": 26
+        "progress": 0.865702479338843,
+        "pressure": 24
+      },
+      {
+        "progress": 0.871900826446281,
+        "pressure": 24
+      },
+      {
+        "progress": 0.871900826446281,
+        "pressure": 24
+      },
+      {
+        "progress": 0.9421487603305785,
+        "pressure": 20
+      },
+      {
+        "progress": 0.9421487603305785,
+        "pressure": 20
+      },
+      {
+        "progress": 0.9483471074380165,
+        "pressure": 20
+      },
+      {
+        "progress": 0.9483471074380165,
+        "pressure": 20
+      },
+      {
+        "progress": 0.9483471074380165,
+        "pressure": 20
+      },
+      {
+        "progress": 0.9504132231404958,
+        "pressure": 20
       },
       {
         "progress": 0.9607438016528925,
-        "pressure": 26
+        "pressure": 19
       },
       {
-        "progress": 0.981404958677686,
-        "pressure": 17
+        "progress": 0.9669421487603306,
+        "pressure": 14
+      },
+      {
+        "progress": 0.9834710743801653,
+        "pressure": 14
       },
       {
         "progress": 0.987603305785124,
-        "pressure": 18
+        "pressure": 14
       },
       {
-        "progress": 0.987603305785124,
-        "pressure": 18
+        "progress": 0.9958677685950413,
+        "pressure": 12
       },
       {
-        "progress": 0.993801652892562,
-        "pressure": 6
+        "progress": 0.9958677685950413,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9958677685950413,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9958677685950413,
+        "pressure": 12
       },
       {
         "progress": 0.9979338842975206,
-        "pressure": 3
+        "pressure": 12
       },
       {
         "progress": 0.9979338842975206,
-        "pressure": 3
+        "pressure": 12
+      },
+      {
+        "progress": 0.9979338842975206,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9979338842975206,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9979338842975206,
+        "pressure": 12
       }
     ],
     "measured": [
-      37,
-      40,
-      39,
-      31,
-      62,
-      28
+      51,
+      63,
+      47,
+      34,
+      59,
+      20
     ],
     "cleared": [
       {
-        "progress": 0.01446280991735538,
+        "progress": 0.010330578512396715,
+        "pixels": 5,
+        "time": 0.533
+      },
+      {
+        "progress": 0.012396694214875992,
+        "pixels": 1,
+        "time": 0.983
+      },
+      {
+        "progress": 0.02685950413223137,
         "pixels": 7,
         "time": 1.183
       },
       {
-        "progress": 0.09297520661157022,
-        "pixels": 38,
-        "time": 1.583
+        "progress": 0.030991735537190035,
+        "pixels": 2,
+        "time": 1.367
       },
       {
-        "progress": 0.16322314049586772,
-        "pixels": 34,
-        "time": 1.833
+        "progress": 0.03512396694214881,
+        "pixels": 2,
+        "time": 1.617
       },
       {
-        "progress": 0.1652892561983471,
+        "progress": 0.04132231404958675,
+        "pixels": 3,
+        "time": 1.767
+      },
+      {
+        "progress": 0.04338842975206614,
         "pixels": 1,
-        "time": 2
+        "time": 2.017
       },
       {
-        "progress": 0.17561983471074383,
+        "progress": 0.05371900826446285,
         "pixels": 5,
-        "time": 2.417
+        "time": 2.4
       },
       {
-        "progress": 0.18388429752066116,
+        "progress": 0.12190082644628097,
+        "pixels": 33,
+        "time": 2.55
+      },
+      {
+        "progress": 0.1301652892561983,
         "pixels": 4,
         "time": 3.267
       },
       {
-        "progress": 0.25619834710743805,
-        "pixels": 35,
-        "time": 3.35
+        "progress": 0.20867768595041325,
+        "pixels": 38,
+        "time": 3.783
       },
       {
-        "progress": 0.25826446280991733,
+        "progress": 0.21074380165289253,
+        "pixels": 1,
+        "time": 4
+      },
+      {
+        "progress": 0.2128099173553719,
         "pixels": 1,
         "time": 4.933
       },
       {
-        "progress": 0.3099173553719008,
-        "pixels": 25,
-        "time": 5.283
-      },
-      {
-        "progress": 0.3202479338842975,
-        "pixels": 5,
-        "time": 5.333
-      },
-      {
-        "progress": 0.3223140495867769,
-        "pixels": 1,
-        "time": 5.5
-      },
-      {
-        "progress": 0.32644628099173556,
-        "pixels": 2,
-        "time": 5.783
-      },
-      {
-        "progress": 0.3326446280991735,
-        "pixels": 3,
-        "time": 6.15
-      },
-      {
-        "progress": 0.33884297520661155,
-        "pixels": 3,
-        "time": 6.55
-      },
-      {
-        "progress": 0.3450413223140496,
-        "pixels": 3,
-        "time": 6.583
-      },
-      {
-        "progress": 0.3471074380165289,
-        "pixels": 1,
-        "time": 7.017
-      },
-      {
-        "progress": 0.4152892561983471,
+        "progress": 0.28099173553719003,
         "pixels": 33,
-        "time": 8.233
+        "time": 5.367
       },
       {
-        "progress": 0.48347107438016534,
+        "progress": 0.34917355371900827,
         "pixels": 33,
-        "time": 8.383
+        "time": 7.8
       },
       {
-        "progress": 0.5392561983471074,
-        "pixels": 27,
-        "time": 8.733
-      },
-      {
-        "progress": 0.5454545454545454,
-        "pixels": 3,
-        "time": 9.75
-      },
-      {
-        "progress": 0.615702479338843,
+        "progress": 0.4194214876033058,
         "pixels": 34,
-        "time": 10.217
+        "time": 8.95
       },
       {
-        "progress": 0.6198347107438016,
-        "pixels": 2,
-        "time": 10.683
-      },
-      {
-        "progress": 0.6301652892561984,
-        "pixels": 5,
-        "time": 11.4
-      },
-      {
-        "progress": 0.6322314049586777,
-        "pixels": 1,
-        "time": 13.067
-      },
-      {
-        "progress": 0.6983471074380165,
+        "progress": 0.4855371900826446,
         "pixels": 32,
-        "time": 13.267
+        "time": 9.983
       },
       {
-        "progress": 0.7066115702479339,
-        "pixels": 4,
-        "time": 14.717
+        "progress": 0.49173553719008267,
+        "pixels": 3,
+        "time": 10.317
       },
       {
-        "progress": 0.7747933884297521,
+        "progress": 0.5475206611570248,
+        "pixels": 27,
+        "time": 10.983
+      },
+      {
+        "progress": 0.5537190082644627,
+        "pixels": 3,
+        "time": 11.333
+      },
+      {
+        "progress": 0.5599173553719008,
+        "pixels": 3,
+        "time": 12.333
+      },
+      {
+        "progress": 0.628099173553719,
         "pixels": 33,
         "time": 15.367
       },
       {
-        "progress": 0.78099173553719,
-        "pixels": 3,
-        "time": 16.583
+        "progress": 0.7004132231404958,
+        "pixels": 35,
+        "time": 16.95
       },
       {
-        "progress": 0.7830578512396694,
-        "pixels": 1,
-        "time": 18.1
-      },
-      {
-        "progress": 0.8491735537190083,
+        "progress": 0.7665289256198347,
         "pixels": 32,
-        "time": 18.317
+        "time": 18
       },
       {
-        "progress": 0.8533057851239669,
-        "pixels": 2,
-        "time": 18.45
-      },
-      {
-        "progress": 0.859504132231405,
-        "pixels": 3,
-        "time": 19.383
-      },
-      {
-        "progress": 0.9276859504132231,
-        "pixels": 33,
-        "time": 21.4
-      },
-      {
-        "progress": 0.9380165289256198,
-        "pixels": 5,
-        "time": 21.75
-      },
-      {
-        "progress": 0.9442148760330579,
-        "pixels": 3,
-        "time": 22.15
-      },
-      {
-        "progress": 0.9524793388429752,
+        "progress": 0.7747933884297521,
         "pixels": 4,
-        "time": 22.917
+        "time": 18.383
+      },
+      {
+        "progress": 0.7768595041322314,
+        "pixels": 1,
+        "time": 20.033
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pixels": 5,
+        "time": 21.7
+      },
+      {
+        "progress": 0.7933884297520661,
+        "pixels": 3,
+        "time": 25.65
+      },
+      {
+        "progress": 0.7995867768595042,
+        "pixels": 3,
+        "time": 26.367
+      },
+      {
+        "progress": 0.865702479338843,
+        "pixels": 32,
+        "time": 29.833
+      },
+      {
+        "progress": 0.871900826446281,
+        "pixels": 3,
+        "time": 30.9
+      },
+      {
+        "progress": 0.9421487603305785,
+        "pixels": 34,
+        "time": 31.7
+      },
+      {
+        "progress": 0.9483471074380165,
+        "pixels": 3,
+        "time": 32.783
+      },
+      {
+        "progress": 0.9504132231404958,
+        "pixels": 1,
+        "time": 34.217
       },
       {
         "progress": 0.9545454545454546,
-        "pixels": 1,
-        "time": 23.633
-      },
-      {
-        "progress": 0.9566115702479339,
-        "pixels": 1,
-        "time": 24.567
+        "pixels": 2,
+        "time": 34.6
       },
       {
         "progress": 0.9607438016528925,
-        "pixels": 2,
-        "time": 25.3
+        "pixels": 3,
+        "time": 35
       },
       {
         "progress": 0.9669421487603306,
         "pixels": 3,
-        "time": 26.083
+        "time": 35.15
       },
       {
-        "progress": 0.981404958677686,
-        "pixels": 7,
-        "time": 26.5
+        "progress": 0.9731404958677686,
+        "pixels": 3,
+        "time": 35.567
+      },
+      {
+        "progress": 0.9834710743801653,
+        "pixels": 5,
+        "time": 35.983
       },
       {
         "progress": 0.987603305785124,
-        "pixels": 3,
-        "time": 26.683
+        "pixels": 2,
+        "time": 36.267
       },
       {
-        "progress": 0.993801652892562,
-        "pixels": 3,
-        "time": 27.633
+        "progress": 0.9958677685950413,
+        "pixels": 4,
+        "time": 36.667
       },
       {
         "progress": 0.9979338842975206,
-        "pixels": 2,
-        "time": 28.233
+        "pixels": 1,
+        "time": 38.55
       },
       {
         "progress": 1,
         "pixels": 1,
-        "time": 29.033
+        "time": 41.467
       }
     ],
     "usedRevives": 0,
     "independentReplay": "passed",
     "stageSamples": [
-      4,
-      9,
-      4,
-      9,
-      10,
-      22
+      7,
+      8,
+      6,
+      12,
+      26,
+      23
     ]
   }
 }

@@ -44,6 +44,14 @@ const lowAmmo=JSON.parse(JSON.stringify(one));lowAmmo.lanes=lowAmmo.lanes.map(()
 assert.throws(()=>core.validateLevel(lowAmmo));
 console.log('✓ validator rejects malformed maps, duplicate bindings and insufficient roster');
 
+const fiveShot=JSON.parse(JSON.stringify(one));
+fiveShot.lanes.forEach(lane=>lane.forEach(w=>w.charges=5));
+assert.ok(core.validateLevel(fiveShot));
+fiveShot.lanes.flat()[0].charges=6;
+assert.throws(()=>core.validateLevel(fiveShot),/1–5/);
+for(const lane of one.lanes)for(const wizard of lane)assert.ok(wizard.charges>=1&&wizard.charges<=5);
+console.log('✓ five-shot imports are accepted and six-shot imports rejected');
+
 function worker(){
   const messages=[];
   const context={console,Math,Date,Uint8Array,Float32Array,Int32Array,ArrayBuffer,setTimeout,clearTimeout,

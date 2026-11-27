@@ -288,7 +288,7 @@
     100% { transform: rotate(-4deg) scale(1.04); opacity: 1; }
   }
 </style>
-<script>window.__MF_CUSTOM_LEVEL={"version":1,"name":"糖霜甜甜圈 · 轻松 · 平稳推进","map":["....................................","....................................","....................................","....................................","....................................","....................................","............YYYRRRPPPYYY............","..........YYRRRRRRPPPPPPYY..........",".........YPPRRRRRRPPBBBPRRY.........",".......YYPPRRRRRRRPPPPPPRRRYY.......","......YYPPPPPRRRGGGPPPPRRRRRYY......","......YPPPPPPPRRRRPPPPRRRRRRRY......",".....YRPPPPPPPRRRRPPPPRRRRRRRPY.....","....YRRRRPPPPPPRR..PPRRRRRGGGPPY....","....YRRRRRRPPP........RRRPPPPPPY....","....YRRRRRRRR..........PPPPPPPPY....","....YRRBBBRRR..........PPPPPPPPY....","....RRRRRRRRR..........PPPPPPPPP....","....PPPPPPPPP..........RRRRRRRRR....","....YPPPPPPPP..........RRRRRBBBY....","....YPPPPPPPP..........RRRRRRRRY....","....YPPPRRRRRR........PPPRRRRRRY....","....YPPPPRRRRRRPP..RRPPPPPPRRRRY....",".....YPRRRRGGGPPPPRRRRPRRRPPPRY.....","......YRRRRRRRPPPPRRRRPPPPPPPY......","......YYRRRRRPPPPPRRRRRPPGGGYY......",".......YYRRRPPPPPPRRRRRRPPPYY.......",".........YRRPPPPRRRRRRRRPPY.........","..........YYPPPPPPRRRRRRYY..........","............YYYPPPRRRYYY............","....................................","....................................","....................................","....................................","....................................","...................................."],"lanes":[[{"color":"Y","charges":1},{"color":"P","charges":1},{"color":"R","charges":1},{"color":"Y","charges":1},{"color":"G","charges":1},{"color":"R","charges":1},{"color":"G","charges":1},{"color":"Y","charges":1},{"color":"P","charges":1},{"color":"P","charges":1},{"color":"R","charges":1},{"color":"G","charges":1},{"color":"Y","charges":1},{"color":"Y","charges":1},{"color":"B","charges":1},{"color":"Y","charges":2}],[{"color":"Y","charges":1},{"color":"P","charges":1},{"color":"Y","charges":1},{"color":"P","charges":1},{"color":"Y","charges":1},{"color":"Y","charges":1},{"color":"B","charges":1},{"color":"R","charges":1},{"color":"Y","charges":1},{"color":"P","charges":1},{"color":"Y","charges":1},{"color":"Y","charges":1}],[{"color":"R","charges":1},{"color":"Y","charges":2},{"color":"Y","charges":2},{"color":"R","charges":1},{"color":"Y","charges":1},{"color":"Y","charges":1},{"color":"B","charges":1},{"color":"R","charges":1},{"color":"Y","charges":1},{"color":"G","charges":1},{"color":"Y","charges":1},{"color":"Y","charges":1},{"color":"Y","charges":1}]],"links":[],"locks":[]};</script></head>
+<script>window.__MF_CUSTOM_LEVEL={"version":1,"name":"糖霜甜甜圈 · 轻松 · 平稳推进","map":["....................................","....................................","....................................","....................................","....................................","....................................","............YYYRRRPPPYYY............","..........YYRRRRRRPPPPPPYY..........",".........YPPRRRRRRPPBBBPRRY.........",".......YYPPRRRRRRRPPPPPPRRRYY.......","......YYPPPPPRRRGGGPPPPRRRRRYY......","......YPPPPPPPRRRRPPPPRRRRRRRY......",".....YRPPPPPPPRRRRPPPPRRRRRRRPY.....","....YRRRRPPPPPPRR..PPRRRRRGGGPPY....","....YRRRRRRPPP........RRRPPPPPPY....","....YRRRRRRRR..........PPPPPPPPY....","....YRRBBBRRR..........PPPPPPPPY....","....RRRRRRRRR..........PPPPPPPPP....","....PPPPPPPPP..........RRRRRRRRR....","....YPPPPPPPP..........RRRRRBBBY....","....YPPPPPPPP..........RRRRRRRRY....","....YPPPRRRRRR........PPPRRRRRRY....","....YPPPPRRRRRRPP..RRPPPPPPRRRRY....",".....YPRRRRGGGPPPPRRRRPRRRPPPRY.....","......YRRRRRRRPPPPRRRRPPPPPPPY......","......YYRRRRRPPPPPRRRRRPPGGGYY......",".......YYRRRPPPPPPRRRRRRPPPYY.......",".........YRRPPPPRRRRRRRRPPY.........","..........YYPPPPPPRRRRRRYY..........","............YYYPPPRRRYYY............","....................................","....................................","....................................","....................................","....................................","...................................."],"lanes":[[{"color":"P","charges":3},{"color":"Y","charges":5},{"color":"Y","charges":5},{"color":"Y","charges":5}],[{"color":"R","charges":4},{"color":"G","charges":4},{"color":"R","charges":3},{"color":"Y","charges":4}],[{"color":"Y","charges":5},{"color":"B","charges":3},{"color":"P","charges":3}]],"links":[],"locks":[]};</script></head>
 <body>
 <div id="wrap">
   <div id="stage">
@@ -351,7 +351,7 @@
     const lanes=raw.lanes.map(lane=>{
       if(!Array.isArray(lane)||lane.length>48)throw Error('每列最多 48 名法师');
       return lane.map(w=>{
-        if(!w||!COLORS.includes(w.color)||!Number.isInteger(w.charges)||w.charges<1||w.charges>3)throw Error('法师颜色不合法或弹药不在 1–3 之间');
+        if(!w||!COLORS.includes(w.color)||!Number.isInteger(w.charges)||w.charges<1||w.charges>5)throw Error('法师颜色不合法或弹药不在 1–5 之间');
         count++;ammo[w.color]=(ammo[w.color]||0)+w.charges;return {color:w.color,charges:w.charges};
       });
     });
@@ -454,11 +454,6 @@
       if(g.lock)g.lock.remaining--;else{for(const k of g.cells)working[Math.floor(k/36)][k%36]='.';removed+=g.cells.length;}
     }
     const units=[];
-    for(const hit of trace){
-      const last=units[units.length-1],p=target[Math.min(5,Math.floor(hit.progress*6))];
-      if(last&&!last.lock&&!hit.lock&&last.color===hit.color&&last.charges<2&&rng()<p){last.charges++;continue;}
-      units.push({color:hit.color,charges:1,progress:hit.progress,lock:hit.lock});
-    }
     // Locks can split one original colour component into several separately
     // removable pieces. Budget the atomic outside/inside pieces so shot order
     // cannot exhaust a colour needed for a remaining lock or protected fragment.
@@ -466,9 +461,23 @@
     for(const lock of locks)atomic.push(...components(map.map((row,y)=>row.map((c,x)=>x>=lock.x&&x<lock.x+lock.width&&y>=lock.y&&y<lock.y+lock.height?c:'.'))));
     for(const color of COLORS){
       const required=atomic.filter(g=>g.color===color).length+locks.filter(l=>l.color===color).reduce((sum,l)=>sum+l.hits,0);
-      let extra=required-units.filter(u=>u.color===color).reduce((sum,u)=>sum+u.charges,0);
-      let pos=units.map(u=>u.color).lastIndexOf(color);
-      while(extra>0){const take=Math.min(2,extra);units.splice(pos+1,0,{color,charges:take,progress:pos>=0?units[pos].progress:0,lock:false});pos++;extra-=take;}
+      const hits=trace.map((hit,index)=>({...hit,index})).filter(hit=>hit.color===color);
+      while(hits.length<required)hits.push({...hits[hits.length-1],index:trace.length+hits.length});
+      // Pool future shots of the same colour. Balance the final remainder
+      // across carriers instead of producing a long tail of one-shot wizards.
+      const count=Math.ceil(hits.length/5),base=Math.floor(hits.length/Math.max(1,count));
+      let cursor=0;
+      for(let i=0;i<count;i++){
+        const charges=base+(i<hits.length%count?1:0),first=hits[cursor];
+        units.push({color,charges,progress:first.progress,order:first.index});cursor+=charges;
+      }
+    }
+    units.sort((a,b)=>a.order-b.order);
+    while(units.length<requested*2){
+      const index=units.reduce((best,u,i)=>u.charges>units[best].charges?i:best,0),unit=units[index];
+      if(!unit||unit.charges<2)throw Error('当前地图无法容纳指定数量的绑定对');
+      const charges=Math.floor(unit.charges/2);unit.charges-=charges;
+      units.splice(index+1,0,{...unit,charges});
     }
     let prevLane=Math.floor(rng()*3);
     for(let i=0;i<units.length;i++) {
@@ -480,6 +489,11 @@
     for(const i of candidates)if(pairCount<requested&&!units[i].pair&&!units[i+1].pair){
       if(units[i].lane===units[i+1].lane)units[i+1].lane=(units[i].lane+1+Math.floor(rng()*2))%3;
       const id=String.fromCharCode(65+pairCount++);units[i].pair=units[i+1].pair=id;
+    }
+    while(pairCount<requested){
+      const free=units.filter(u=>!u.pair);if(free.length<2)break;
+      if(free[0].lane===free[1].lane)free[1].lane=(free[0].lane+1+Math.floor(rng()*2))%3;
+      const id=String.fromCharCode(65+pairCount++);free[0].pair=free[1].pair=id;
     }
     if(pairCount!==requested)throw Error('当前地图无法容纳指定数量的绑定对');
     const lanes=[[],[],[]],links=[];

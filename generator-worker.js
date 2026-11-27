@@ -1,5 +1,5 @@
 /* Verify candidates by executing the production game in a worker, without drawing. */
-importScripts('./vendor/three.r147.min.js', './level-core.js?v=locks-1');
+importScripts('./vendor/three.r147.min.js', './level-core.js?v=charges-5');
 const delay = setTimeout.bind(self);
 const noop = () => {};
 THREE.WebGLRenderer = class { setPixelRatio(){} setSize(){} setClearColor(){} render(){} };
@@ -17,7 +17,7 @@ function load(level) {
   self.document={body:element('body'),createElement:type=>type==='canvas'?canvas():element(type),getElementById:id=>{if(!elements.has(id))elements.set(id,element(id));return elements.get(id);}};
   self.window={innerWidth:448,innerHeight:960,devicePixelRatio:1,addEventListener:noop,__MF_CUSTOM_LEVEL:level,__MF_PLAY_LOCATION:{search:'?sim=0.001',hash:''},__MF_HEADLESS:true};
   self.requestAnimationFrame=noop;self.setTimeout=noop;self.clearTimeout=noop;
-  importScripts('./game.js?v=locks-1');
+  importScripts('./game.js?v=charges-5');
   return window.__mf;
 }
 function verify(level,variant=0) {

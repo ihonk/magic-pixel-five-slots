@@ -73,7 +73,7 @@
     if(typeof Worker==='undefined'){status('此浏览器不支持后台验证，请换用支持 Web Worker 的浏览器。',true);return;}
     const job=++generation;
     setBusy(true);status('正在构造地图、队列与连线，并运行第一批候选…');
-    try {worker=new Worker(new URL('./generator-worker.js?v=locks-1',location.href));}catch(error){setBusy(false);status('无法启动验证：'+error.message,true);return;}
+    try {worker=new Worker(new URL('./generator-worker.js?v=charges-5',location.href));}catch(error){setBusy(false);status('无法启动验证：'+error.message,true);return;}
     worker.onmessage=({data})=>{
       if(job!==generation)return;
       if(data.type==='progress')status('验证候选 '+data.attempt+' / '+data.total+' · 已有 '+data.passed+' 个可通关结果');
