@@ -26,6 +26,8 @@
   }
   #gl { position: absolute; inset: 0; width: 448px; height: 960px; display: block; }
 
+  #pairLinks { position:absolute; inset:0; width:448px; height:960px; pointer-events:none; overflow:hidden; }
+
   /* ---------- HUD ---------- */
   #hud { position: absolute; inset: 0; pointer-events: none; }
   .level-tag {
@@ -288,6 +290,7 @@
 <div id="wrap">
   <div id="stage">
     <canvas id="gl"></canvas>
+    <svg id="pairLinks" viewBox="0 0 448 960" aria-label="法师绑定连线"></svg>
     <div id="hud">
       <div class="level-tag" id="levelTag">Level 1</div>
       <button class="gear" id="restartBtn" type="button" aria-label="重新开始本关" style="pointer-events:auto;cursor:pointer;padding:0">↻</button>
@@ -301,6 +304,6 @@
 </div>
 
 <script src="./vendor/three.r147.min.js"></script>
-<script src="./game.js?v=conveyor-3"></script>
+<script src="./game.js?v=linked-pairs-1"></script>
 </body>
 </html>

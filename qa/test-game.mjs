@@ -37,21 +37,24 @@ test('fireAtColumn rejects cross-column calls and fires a vertical streak from c
 test('belt movement advances at configured speed and wraps by full length',()=>{const s=fnSource('advanceBelt');assert.match(s,/beltOffset\s*=\s*\(beltOffset\s*\+\s*BELT_SPEED\s*\*\s*rate\s*\*\s*dt\)\s*%\s*BELT_LENGTH/);assert.match(source,/const BELT_LEFT\s*=\s*-48,\s*BELT_LENGTH\s*=\s*W\s*\+\s*96,\s*BELT_SPEED\s*=\s*48/);assert.match(source,/BELT_BOOST\s*=\s*1\.5,\s*BELT_RUSH\s*=\s*200\s*\/\s*BELT_SPEED/);});
 
 function groundQueueApi(groundLayout = true) {
-  const queue = Array.from({length: 6}, (_, id) => ({
-    id, lane: id % 3, state: 'ground', slot: null, moving: false
+  const queue = Array.from({length: 9}, (_, id) => ({
+    id, lane: id % 3, state: 'ground', slot: null, moving: false,
+    mesh:{position:{x:0},userData:{charges:2,colorKey:'r'}}
   }));
-  const state = {queue, slots: Array(5).fill(null), running: true, over: false};
-  const code = ['isGroundHead', 'sendToSlot', 'revive'].map(fnSource).join('\n');
+  const state = {queue, slots: Array(5).fill(null), running: true, over: false, pendingBoarding:null, rearranging:false};
+  const linkedPairs=[]; const notices=[];
+  const code = ['partnerOf','configureLinks','isGroundHead','boardingStatus','planPairSlots',
+    'finishPairBoarding','updatePairBoarding','sendToSlot','leaveWizard','releaseReadyPairs','revive'].map(fnSource).join('\n');
   const api = new Function(
-    'state', 'FX', 'W', 'BELT_LENGTH', 'beltPosition', 'placeInSlot',
-    'relayoutGround', 'updateCounter', 'showHint', 'hideOverlay',
-    `${code}; return {sendToSlot, revive};`
+    'state', 'linkedPairs', 'wizards', 'FX', 'W', 'BELT_LENGTH', 'beltPosition', 'wx', 'placeInSlot',
+    'relayoutGround', 'updateCounter', 'showHint', 'hideOverlay', 'simT',
+    `${code}; return {configureLinks,boardingStatus,planPairSlots,sendToSlot,updatePairBoarding,releaseReadyPairs,revive};`
   )(
-    state, {ground: groundLayout}, 448, 544, i => 40 + i * 80,
+    state, linkedPairs, queue, {ground: groundLayout}, 448, 544, i => 40 + i * 80, x=>x,
     (w, idx) => { w.state = 'slot'; w.slot = idx; w.moving = true; },
-    () => {}, () => {}, () => {}, () => {}
+    () => {}, () => {}, s=>notices.push(s), () => {}, 2
   );
-  return {...api, state, wizards: queue.slice()};
+  return {...api, state, linkedPairs, notices, wizards: queue.slice()};
 }
 
 test('each ground lane admits only its head and unlocks the next wizard on departure', () => {
@@ -74,7 +77,7 @@ test('revived wizards regain lane priority over the waiting ground queue', () =>
   const {sendToSlot, revive, state, wizards} = groundQueueApi();
   for (const w of wizards.slice(0, 3)) assert.equal(sendToSlot(w), true);
   revive();
-  assert.deepEqual(state.queue.map(w => w.id), [0, 1, 2, 3, 4, 5]);
+  assert.deepEqual(state.queue.slice(0,6).map(w => w.id), [0, 1, 2, 3, 4, 5]);
   for (const w of wizards.slice(3)) assert.equal(sendToSlot(w), false);
   assert.equal(sendToSlot(wizards[1]), true);
   assert.equal(sendToSlot(wizards[4]), true);
@@ -88,7 +91,119 @@ test('classic ground layout retains free wizard selection', () => {
 
 test('send capacity remains five carriers and rejects a sixth wizard',()=>{const s=fnSource('sendToSlot');assert.match(s,/for\s*\(let i\s*=\s*0;\s*i\s*<\s*5;\s*i\+\+\)/);assert.match(s,/if\s*\(idx\s*<\s*0\)[^]*return false/);assert.match(s,/state\.slots\[idx\]\s*=\s*w/);});
 
-test('revive returns first three occupied slots without losing charges',()=>{const state={slots:[],queue:[{id:'q'}],over:true,running:false};const w=(id,n)=>({id,slot:id,state:'slot',warned:true,mesh:{userData:{charges:n}}});state.slots=[w(0,2),null,w(2,1),w(3,2),w(4,1)];let hidden=0,relaid=0,updated=0;const revive=new Function('state','hideOverlay','relayoutGround','updateCounter',`${fnSource('revive')};return revive`)(state,()=>hidden++,()=>relaid++,()=>updated++);revive();assert.deepEqual(state.slots.map(x=>x?.id??null),[null,null,null,null,4]);assert.deepEqual(state.queue.map(x=>x.id),[0,2,3,'q']);assert.deepEqual(state.queue.slice(0,3).map(x=>x.mesh.userData.charges),[2,1,2]);assert.ok(state.queue.slice(0,3).every(x=>x.state==='ground'&&x.slot===null&&!x.warned));assert.equal(state.over,false);assert.equal(state.running,true);assert.deepEqual([hidden,relaid,updated],[1,1,1]);});
+test('revive returns first three occupied slots without losing charges',()=>{const a=groundQueueApi(),{state,wizards,revive}=a;state.queue=[wizards[5]];state.slots=[wizards[0],null,wizards[2],wizards[3],wizards[4]];[0,2,3,4].forEach(i=>{wizards[i].state='slot';wizards[i].slot=i;wizards[i].mesh.userData.charges=i%2+1;});state.over=true;state.running=false;revive();assert.deepEqual(state.slots.map(x=>x?.id??null),[null,null,null,null,4]);assert.deepEqual(state.queue.map(x=>x.id),[0,2,3,5]);assert.deepEqual(state.queue.slice(0,3).map(x=>x.mesh.userData.charges),[1,1,2]);assert.ok(state.queue.slice(0,3).every(x=>x.state==='ground'&&x.slot===null&&!x.warned));assert.equal(state.over,false);assert.equal(state.running,true);});
+
+test('linked members need both lane heads and board together into adjacent carriers',()=>{
+  const a=groundQueueApi(),{state,wizards,configureLinks,sendToSlot,updatePairBoarding}=a;
+  configureLinks([{id:'A',members:[[0,0],[2,1]]}]);
+  assert.equal(sendToSlot(wizards[0]),false);
+  assert.equal(state.slots.filter(Boolean).length,0);
+  assert.equal(sendToSlot(wizards[2]),true);
+  wizards[2].moving=false;
+  assert.equal(sendToSlot(wizards[0]),true);
+  assert.equal(state.slots.filter(Boolean).length,3);
+  assert.ok(!state.queue.includes(wizards[0])&&!state.queue.includes(wizards[5]));
+  assert.equal((wizards[0].slot+1)%5,wizards[5].slot);
+  assert.equal(sendToSlot(wizards[3]),false);
+  wizards[0].moving=wizards[5].moving=false;updatePairBoarding(0);
+  assert.equal(state.pendingBoarding,null);
+});
+
+test('linked pair waits with only one free carrier',()=>{
+  const a=groundQueueApi(),{state,wizards,configureLinks,sendToSlot}=a;
+  configureLinks([{id:'A',members:[[0,0],[2,1]]}]);
+  state.queue=[wizards[0],wizards[5]];
+  [1,2,3,4].forEach((slot,i)=>{const w=wizards[i+1];w.slot=slot;w.state='slot';w.moving=false;state.slots[slot]=w;});
+  assert.equal(sendToSlot(wizards[0]),false);
+  assert.equal(state.pendingBoarding,null);
+  assert.deepEqual(state.queue,[wizards[0],wizards[5]]);
+  assert.equal(state.slots.filter(Boolean).length,4);
+});
+
+test('dispersed free carriers repack without losing occupants or charges and reserve both targets',()=>{
+  const a=groundQueueApi(),{state,wizards,configureLinks,sendToSlot,updatePairBoarding}=a;
+  configureLinks([{id:'A',members:[[0,0],[2,1]]}]);
+  state.queue=[wizards[0],wizards[5],wizards[7]];
+  [0,2,4].forEach((slot,i)=>{const w=wizards[i+1];w.slot=slot;w.state='slot';w.moving=false;w.mesh.userData.charges=i+1;state.slots[slot]=w;});
+  const before=new Map(state.slots.filter(Boolean).map(w=>[w,w.mesh.userData.charges]));
+  assert.equal(sendToSlot(wizards[0]),true);
+  assert.equal(state.rearranging,true);
+  assert.equal(state.pendingBoarding.phase,'rearranging');
+  assert.equal(state.slots.filter(Boolean).length,3);
+  assert.equal(sendToSlot(wizards[7]),false);
+  updatePairBoarding(.45);
+  assert.equal(state.slots.filter(Boolean).length,5);
+  assert.equal((wizards[0].slot+1)%5,wizards[5].slot);
+  for(const [w,charges] of before){assert.equal(w.state,'slot');assert.equal(w.mesh.userData.charges,charges);assert.equal(state.slots[w.slot],w);}
+  assert.equal(state.pendingBoarding.phase,'boarding');
+  wizards[0].moving=wizards[5].moving=false;updatePairBoarding(0);
+  assert.equal(state.pendingBoarding,null);
+});
+
+test('repacking keeps an existing linked pair together across the circular seam',()=>{
+  const a=groundQueueApi(),{wizards,configureLinks,planPairSlots}=a;
+  configureLinks([{id:'A',members:[[0,0],[2,1]]}]);
+  const slots=[wizards[0],null,wizards[1],null,wizards[5]];
+  const plan=planPairSlots(slots);
+  assert.deepEqual(new Set(plan.slots.filter(Boolean)),new Set(slots.filter(Boolean)));
+  assert.equal((plan.slots.indexOf(wizards[5])+1)%5,plan.slots.indexOf(wizards[0]));
+  assert.equal((plan.targets[0]+1)%5,plan.targets[1]);
+});
+
+test('spent linked wizard waits until both shots resolve, then both leave in one release',()=>{
+  const a=groundQueueApi(),{state,wizards,configureLinks,releaseReadyPairs}=a;
+  configureLinks([{id:'A',members:[[0,0],[2,1]]}]);
+  for(const [slot,w] of [[0,wizards[0]],[1,wizards[5]]]){state.slots[slot]=w;w.slot=slot;w.state='slot';w.moving=false;}
+  wizards[0].mesh.userData.charges=0;wizards[5].mesh.userData.charges=1;
+  releaseReadyPairs();assert.equal(state.slots.filter(Boolean).length,2);
+  wizards[5].mesh.userData.charges=0;wizards[5].shotUntil=3;
+  releaseReadyPairs();assert.equal(state.slots.filter(Boolean).length,2);
+  wizards[5].shotUntil=1;releaseReadyPairs();
+  assert.equal(state.slots.filter(Boolean).length,0);
+  assert.equal(wizards[0].state,'leaving');assert.equal(wizards[5].state,'leaving');
+});
+
+test('revive returns a complete linked pair even when that exceeds three wizards',()=>{
+  const a=groundQueueApi(),{state,wizards,configureLinks,revive}=a;
+  configureLinks([{id:'A',members:[[0,0],[2,1]]}]);
+  state.queue=[wizards[7]];
+  state.slots=[wizards[1],wizards[2],wizards[0],wizards[3],wizards[5]];
+  state.slots.forEach((w,i)=>{w.slot=i;w.state='slot';w.mesh.userData.charges=i+1;});
+  state.over=true;state.running=false;revive();
+  assert.deepEqual(state.queue.slice(0,4),[wizards[1],wizards[2],wizards[0],wizards[5]]);
+  assert.equal(wizards[3].state,'slot');
+});
+
+test('all five-carrier layouts with at least two gaps retain occupants and circular order',()=>{
+  const a=groundQueueApi(),{wizards,planPairSlots}=a;
+  for(let mask=0;mask<32;mask++){
+    const occupied=Array.from({length:5},(_,i)=>i).filter(i=>mask&(1<<i));
+    if(occupied.length>3) continue;
+    const slots=Array(5).fill(null);
+    occupied.forEach((slot,i)=>slots[slot]=wizards[i]);
+    const plan=planPairSlots(slots);
+    assert.ok(plan,`mask ${mask}`);
+    assert.equal((plan.targets[0]+1)%5,plan.targets[1],`targets ${mask}`);
+    assert.ok(plan.targets.every(i=>plan.slots[i]===null),`gaps ${mask}`);
+    assert.deepEqual(new Set(plan.slots.filter(Boolean)),new Set(slots.filter(Boolean)),`members ${mask}`);
+    const next=plan.slots.filter(Boolean);
+    const original=slots.filter(Boolean);
+    assert.ok(next.every((w,i)=>w===original[i]),`order ${mask}`);
+  }
+});
+
+test('repacking preserves every existing pair that spans carrier four to zero',()=>{
+  const a=groundQueueApi(),{wizards,configureLinks,planPairSlots}=a;
+  configureLinks([{id:'A',members:[[0,0],[2,1]]}]);
+  for(const extra of [null,1,2,3]){
+    const slots=[wizards[5],null,null,null,wizards[0]];
+    if(extra!==null)slots[extra]=wizards[1];
+    const plan=planPairSlots(slots);
+    assert.deepEqual(new Set(plan.slots.filter(Boolean)),new Set(slots.filter(Boolean)));
+    assert.equal((plan.slots.indexOf(wizards[0])+1)%5,plan.slots.indexOf(wizards[5]));
+    assert.equal((plan.targets[0]+1)%5,plan.targets[1]);
+  }
+});
 
 test('level reset clears belt, old timers, and transient effect pools',()=>{const s=fnSource('startLevel');assert.match(s,/beltOffset\s*=\s*0[^]*syncBeltTexture\(\)/);assert.match(s,/timers\.length\s*=\s*0/);assert.match(s,/levelGeneration\+\+/);assert.match(s,/resolveUntil\s*=\s*simT/);assert.match(s,/streaks\.forEach[^]*onHit\s*=\s*null[^]*visible\s*=\s*false/);assert.match(s,/flashes\.forEach[^]*life\s*=\s*0[^]*visible\s*=\s*false/);assert.match(s,/pLife\.fill\(0\)[^]*pCol\.fill\(0\)/);assert.match(s,/clearTimeout\(hintTimer\)/);});
 

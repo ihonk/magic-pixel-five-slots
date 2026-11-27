@@ -133,7 +133,7 @@
   }
 
   const LEVELS = [
-    { name: "Level 1", map: MAP_SPIRAL },
+    { name: "Level 1", map: MAP_SPIRAL, links: [{ id: "A", members: [[0, 0], [2, 1]] }] },
     { name: "Level 2", map: makeStar() },
     { name: "Level 3", map: makeDonut() }
   ];
@@ -911,6 +911,50 @@
     w.userData.numMat.needsUpdate = true;
   }
 
+  const linkedPairs = [];
+  let lastPairMarkup = "";
+  function renderPairLinks() {
+    const layer = document.getElementById("pairLinks");
+    let markup = "";
+    linkedPairs.forEach(function (pair) {
+      const a = pair.members[0], b = pair.members[1];
+      if ([a,b].some(function (w) { return w.state === "gone" || w.state === "leaving"; })) return;
+      const pos = function (w) { return {x:w.mesh.position.x + W / 2, y:H / 2 - w.mesh.position.y}; };
+      const p = pos(a), q = pos(b);
+      const id = String(pair.id).replace(/[^a-zA-Z0-9]/g, "");
+      let path;
+      if (a.slot !== null && b.slot !== null && Math.abs(p.x-q.x) > BELT_LENGTH / 2) {
+        const left = p.x < q.x ? p : q, right = p.x < q.x ? q : p;
+        path = "M " + left.x + " " + (left.y+23) + " L -48 " + (left.y+23) + " M " + right.x + " " + (right.y+23) + " L 496 " + (right.y+23);
+      } else {
+        const dx=q.x-p.x, dy=q.y-p.y, length=Math.max(1,Math.hypot(dx,dy));
+        const r = a.slot === null ? 31 : 23;
+        const x1=p.x+dx/length*r, y1=p.y+dy/length*r, x2=q.x-dx/length*r, y2=q.y-dy/length*r;
+        path = "M " + x1 + " " + y1 + " Q " + ((x1+x2)/2) + " " + (Math.max(y1,y2)+28) + " " + x2 + " " + y2;
+      }
+      markup += '<path d="'+path+'" fill="none" stroke="#59351b" stroke-width="7" opacity=".7"/><path d="'+path+'" fill="none" stroke="#ffe19a" stroke-width="3" stroke-dasharray="6 3"/>';
+      [a,b].forEach(function (w) {
+        const v=pos(w), waiting=w.slot!==null && w.mesh.userData.charges===0;
+        const text=waiting?id+' · 等待':id, width=waiting?66:24;
+        markup += '<g transform="translate('+v.x+','+(v.y-43)+')"><rect x="'+(-width/2)+'" y="-9" width="'+width+'" height="18" rx="8" fill="'+(waiting?'#5c4675':'#6d421d')+'" stroke="#ffe19a" stroke-width="1.5"/><text text-anchor="middle" y="4" fill="#fff5cc" font-size="11" font-weight="800">'+text+'</text></g>';
+      });
+    });
+    if (markup !== lastPairMarkup) { layer.innerHTML=markup; lastPairMarkup=markup; }
+  }
+
+  function partnerOf(w) { return w && w.partner || null; }
+
+  function configureLinks(definitions) {
+    linkedPairs.length = 0;
+    for (const def of definitions) {
+      const members = def.members.map(function (pos) { return wizards.filter(function (w) { return w.lane === pos[0]; })[pos[1]]; });
+      if (members.length !== 2 || members.some(function (w) { return !w || w.partner; }) || members[0].lane === members[1].lane) throw new Error("Invalid linked wizard configuration: " + def.id);
+      const pair = {id: def.id, members: members};
+      members.forEach(function (w, i) { w.partner = members[1 - i]; w.pair = pair; });
+      linkedPairs.push(pair);
+    }
+  }
+
   const wizards = [];   // {mesh, slot|null, state: 'ground'|'slot'|'leaving'|'gone', ...}
 
   function slotPos(i) { return { x: beltPosition(i), y: SLOT_Y }; }
@@ -935,7 +979,7 @@
   }
 
   function advanceBelt(dt) {
-    if (!state.running || state.over) return;
+    if (!state.running || state.over || state.rearranging) return;
     const rate = beltRush() ? BELT_RUSH : BELT_BOOST;
     beltOffset = (beltOffset + BELT_SPEED * rate * dt) % BELT_LENGTH;
     syncBeltTexture();
@@ -1045,6 +1089,8 @@
     running: false,
     over: false,
     coins: 0,
+    pendingBoarding: null,
+    rearranging: false,
     lastArrival: 0,
     downTime: 0
   };
@@ -1067,7 +1113,7 @@
     if (t < 1.6) return;
     if (t - _lastAuto < 1.1) return;
     _lastAuto = t;
-    const ground = state.queue.filter(isGroundHead);
+    const ground = state.queue.filter(function (w) { return boardingStatus(w).ok; });
     const w = ground.find(function (x) { return legalColumnsForColor(x.mesh.userData.colorKey).length > 0; }) || ground[0];
     if (w) sendToSlot(w);
   }
@@ -1097,7 +1143,7 @@
   function anyLegalMove() {
     for (let i = 0; i < 5; i++) {
       const w = state.slots[i];
-      if (!w) continue;
+      if (!w || w.mesh.userData.charges <= 0) continue;
       if (legalColumnsForColor(w.mesh.userData.colorKey).length > 0) return true;
     }
     return false;
@@ -1122,6 +1168,9 @@
     state.running = true;
     state.slots = [null, null, null, null, null];
     state.queue = [];
+    state.pendingBoarding = null;
+    state.rearranging = false;
+    linkedPairs.length = 0;
     hideOverlay();
 
     const lv = LEVELS[n % LEVELS.length];
@@ -1156,13 +1205,15 @@
       return b[1] - a[1];
     });
     buildWizards(roster);
+    configureLinks(lv.links || []);
 
     state.queue = wizards.slice();
     state.lastArrival = 0;
     updateCounter();
     hideHint(true);
+    renderPairLinks();
     const lvAtStart = n;
-    schedule(0.9, function () { if (state.level === lvAtStart && !state.over) showHint("点法师登上传送带，移动到同色像素下方时自动施法"); });
+    schedule(0.9, function () { if (state.level === lvAtStart && !state.over) showHint("点队首登带；连线法师需双方都到队首，且空位不少于两个"); });
   }
 
   // ---------- 提示 ----------
@@ -1182,24 +1233,90 @@
   // 三列纵队各自按队列顺序上场，复活退回队首的巫师也遵循此规则。
   function isGroundHead(w) {
     if (w.state !== "ground" || w.slot !== null) return false;
-    if (!FX.ground) return true;
+    if (!FX.ground && !partnerOf(w)) return true;
     return state.queue.find(function (x) {
       return x.state === "ground" && x.slot === null && x.lane === w.lane;
     }) === w;
   }
 
-  // 玩家从每列队首选一个巫师送上去；上位后若存在可消除的方块，自动发射
+  function boardingStatus(w) {
+    if (state.over || !state.running || state.pendingBoarding || state.rearranging) return {ok:false, hint:"正在成对登带，请稍候"};
+    if (!isGroundHead(w)) return {ok:false, hint:"请先派遣这一列前面的法师"};
+    const partner = partnerOf(w);
+    if (partner && !isGroundHead(partner)) return {ok:false, hint:"连线 " + w.pair.id + " 的伙伴还没到队首，先派遣伙伴前面的法师"};
+    const members = partner ? w.pair.members.slice() : [w];
+    if (state.slots.filter(function (x) { return !x; }).length < members.length) return {ok:false, hint:partner ? "连线法师需要两个空位，两人会一起登带" : "传送带已满，先等法师完成施法"};
+    return {ok:true, members:members};
+  }
+
+  // Circular carrier indices are adjacent, including 4 -> 0. Pack from a cut
+  // outside any existing pair; this preserves occupied order and pair adjacency.
+  function planPairSlots(slots) {
+    if (slots.filter(function (w) { return !w; }).length < 2) return null;
+    for (let i = 0; i < 5; i++) if (!slots[i] && !slots[(i + 1) % 5]) return {slots:slots.slice(), targets:[i, (i + 1) % 5], moves:[]};
+    let start = 0;
+    while (start < 5 && slots[start] && partnerOf(slots[start]) && partnerOf(slots[start]) === slots[(start + 4) % 5]) start++;
+    const next = Array(5).fill(null), moves = [];
+    let count = 0;
+    for (let offset = 0; offset < 5; offset++) {
+      const old = (start + offset) % 5, w = slots[old];
+      if (!w) continue;
+      const target = (start + count) % 5;
+      next[target] = w;
+      if (target !== old) moves.push({w:w, from:start + offset, to:start + count});
+      count++;
+    }
+    return {slots:next, targets:[(start + count) % 5, (start + count + 1) % 5], moves:moves};
+  }
+
+  function finishPairBoarding() {
+    const pending = state.pendingBoarding;
+    if (!pending || pending.phase !== "rearranging") return;
+    state.rearranging = false;
+    pending.phase = "boarding";
+    const members = pending.members;
+    state.queue = state.queue.filter(function (w) { return !members.includes(w); });
+    members.forEach(function (w, i) { const target = pending.targets[i]; state.slots[target] = w; placeInSlot(w, target, true); });
+    relayoutGround(true);
+    updateCounter();
+  }
+
+  function updatePairBoarding(dt) {
+    const pending = state.pendingBoarding;
+    if (!pending || !state.running || state.over) return;
+    if (pending.phase === "rearranging") {
+      pending.t += dt;
+      const p = Math.min(1, pending.t / .45), ease = p * p * (3 - 2 * p);
+      pending.moves.forEach(function (move) {
+        const u = move.from + (move.to - move.from) * ease;
+        move.w.mesh.position.x = wx(beltPosition(u));
+      });
+      if (p >= 1) finishPairBoarding();
+    } else if (pending.members.every(function (w) { return !w.moving; })) {
+      state.pendingBoarding = null;
+    }
+  }
+
   function sendToSlot(w) {
-    if (state.over || !state.running) return false;
-    if (!isGroundHead(w)) return false;
-    let idx = -1;
-    let leftmost = Infinity;
+    const status = boardingStatus(w);
+    if (!status.ok) { showHint(status.hint); return false; }
+    if (status.members.length === 2) {
+      if (wizards.some(function (x) { return x.slot !== null && x.moving; })) { showHint("请等待带上的法师落稳，再让连线法师登带"); return false; }
+      const plan = planPairSlots(state.slots);
+      state.pendingBoarding = {members:status.members, targets:plan.targets, moves:plan.moves, phase:"rearranging", t:0};
+      state.slots = plan.slots;
+      state.slots.forEach(function (x, i) { if (x) x.slot = i; });
+      state.rearranging = plan.moves.length > 0;
+      if (!state.rearranging) finishPairBoarding();
+      else showHint("正在挪出两个相邻空位，连线法师即将一起登带");
+      return true;
+    }
+    let idx = -1, leftmost = Infinity;
     for (let i = 0; i < 5; i++) if (!state.slots[i]) {
-      const x = beltPosition(i);
-      const priority = x >= 24 && x <= W - 24 ? x : x + BELT_LENGTH;
+      const x = beltPosition(i), priority = x >= 24 && x <= W - 24 ? x : x + BELT_LENGTH;
       if (priority < leftmost) { leftmost = priority; idx = i; }
     }
-    if (idx < 0) { showHint("传送带已满，先等法师完成施法"); return false; }
+    if (idx < 0) return false;
     state.queue = state.queue.filter(function (x) { return x !== w; });
     state.slots[idx] = w;
     placeInSlot(w, idx, true);
@@ -1208,8 +1325,26 @@
     return true;
   }
 
+  function leaveWizard(w) {
+    if (w.slot !== null) state.slots[w.slot] = null;
+    w.slot = null;
+    w.state = "leaving";
+    w.waiting = false;
+    w.leaveT = 0;
+  }
+
+  function releaseReadyPairs() {
+    if (state.rearranging || state.pendingBoarding) return;
+    linkedPairs.forEach(function (pair) {
+      if (pair.members.every(function (w) { return w.state === "slot" && !w.moving && w.mesh.userData.charges === 0 && simT >= (w.shotUntil || 0); })) {
+        pair.members.forEach(leaveWizard);
+        updateCounter();
+      }
+    });
+  }
+
   function autoFire(w) {
-    if (!w || w.state !== "slot" || w.moving) return false;
+    if (state.rearranging || state.pendingBoarding || !w || w.state !== "slot" || w.moving) return false;
     if (w.mesh.userData.charges <= 0) return false;
     if (w.cooldown > 0) return false;
     const col = columnUnderWizard(w);
@@ -1227,7 +1362,7 @@
       const w = wizards[i];
       if (w.cooldown > 0) w.cooldown -= dt;
     }
-    if (!state.running || state.over) return;
+    if (!state.running || state.over || state.rearranging || state.pendingBoarding) return;
     for (let i = 0; i < 5; i++) {
       const w = state.slots[i];
       if (!w) continue;
@@ -1289,7 +1424,7 @@
 
   // ---------- 发射 ----------
   function fireAtColumn(w, col) {
-    if (!w || w.state !== "slot" || w.moving || w.mesh.userData.charges <= 0 || col !== columnUnderWizard(w)) return false;
+    if (state.rearranging || state.pendingBoarding || col < 0 || col >= NX || !w || w.state !== "slot" || w.moving || w.mesh.userData.charges <= 0 || col !== columnUnderWizard(w)) return false;
     const k = bottomOfColumn(col);
     if (k < 0) return false;
     if (grid[k].color !== w.mesh.userData.colorKey) return false;
@@ -1306,7 +1441,8 @@
     // 每格之间的间隔：让"烧过去"的过程看得见，但整段不超过 ~2.2 秒
     const step = Math.min(0.022, 2.2 / Math.max(1, order.length));
     const travel = 0.10;
-    resolveUntil = Math.max(resolveUntil, simT + travel + order.length * step + 0.35);
+    w.shotUntil = simT + travel + order.length * step + 0.35;
+    resolveUntil = Math.max(resolveUntil, w.shotUntil);
 
     // 发射瞬间：巫师身上炸一团光
     sfx.fire();
@@ -1355,15 +1491,18 @@
       });
     });
 
-    // 消耗
+    // A spent linked wizard keeps its carrier until both last shots resolve.
     w.mesh.userData.charges--;
+    setWizardNumber(w.mesh, w.mesh.userData.charges);
     if (w.mesh.userData.charges <= 0) {
-      if (slot !== null) state.slots[slot] = null;
-      w.state = "leaving";
-      w.leaveT = 0;
-      updateCounter();
+      if (partnerOf(w)) {
+        w.waiting = true;
+        showHint("连线 " + w.pair.id + "：弹药耗尽，等待伙伴完成施法");
+      } else {
+        leaveWizard(w);
+        updateCounter();
+      }
     } else {
-      setWizardNumber(w.mesh, w.mesh.userData.charges);
       w.cooldown = travel + order.length * step * 0.9 + 0.25;
     }
 
@@ -1471,12 +1610,16 @@
     for (let i = 0; i < 5 && back.length < 3; i++) {
       const w = state.slots[i];
       if (!w) continue;
-      state.slots[i] = null;
-      w.slot = null;
-      w.state = "ground";
-      w.warned = false;
-      back.push(w);
+      const group = partnerOf(w) ? w.pair.members : [w];
+      group.forEach(function (member) {
+        if (member.slot === null || back.includes(member)) return;
+        state.slots[member.slot] = null;
+        member.slot = null; member.state = "ground";
+        member.warned = false; member.waiting = false; member.shotUntil = 0;
+        back.push(member);
+      });
     }
+    state.pendingBoarding = null; state.rearranging = false;
     state.queue = back.concat(state.queue);
     relayoutGround(true);
     updateCounter();
@@ -1609,6 +1752,7 @@
       if (f.life <= 0) f.sprite.visible = false;
     }
 
+    updatePairBoarding(dt);
     advanceBelt(dt);
 
     // 巫师入场 / 待机呼吸
@@ -1642,16 +1786,18 @@
     }
 
     // 到达 / 判定
+    releaseReadyPairs();
     autoFireTick(dt);
+    renderPairLinks();
 
     if (state.running && !state.over) {
       acc += dt;
       if (acc > 0.25) {
         acc = 0;
-        if (t < resolveUntil || wizards.some(function (w) { return w.moving; })) { /* wait for arrivals and visible elimination */ }
+        if (state.pendingBoarding || state.rearranging || t < resolveUntil || wizards.some(function (w) { return w.moving; })) { /* wait for arrivals and visible elimination */ }
         else if (shelfCount() >= 5 && !anyLegalMove()) fail();
-        // 兜底：地面已空、小径没满、但在场巫师都无处可打且棋盘未清空 → 真死局（复活也救不了），走重开
-        else if (aliveCount > 0 && !anyLegalMove() && !wizards.some(function (w) { return w.state === "ground" || w.moving; })) fail(true);
+        // 包括仅剩一个空位而地面队首必须成对登带的死局；有带上成员时允许复活。
+        else if (aliveCount > 0 && !anyLegalMove() && !state.queue.some(function (w) { return boardingStatus(w).ok; })) fail(shelfCount() === 0);
       }
     }
 
@@ -1745,7 +1891,7 @@
   }
 
   window.__mf = {
-    state: state, grid: grid, startLevel: startLevel,
+    state: state, grid: grid, startLevel: startLevel, linkedPairs: linkedPairs,
     beltPosition: beltPosition, columnUnderWizard: columnUnderWizard,
     step: step, fire: fireAtColumn, send: sendToSlot, wizards: wizards,
     win: win, fail: fail, revive: revive, FX: FX
