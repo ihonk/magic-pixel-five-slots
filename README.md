@@ -6,6 +6,8 @@
 
 新增机制：[跨列双法师连线](docs/linked-wizards.md)。首关的左列第一位与右列第二位组成绑定对；两人都到队首且传送带有两个空位时，可点击任一成员成对登带。
 
+关卡工坊：[在线生成关卡](https://ihonk.github.io/magic-pixel-five-slots/generator.html) · [生成与验证说明](docs/level-generator.md)。可选难度、局内节奏、绑定对数和种子，预览关卡后导出 JSON 或直接试玩。
+
 ## 玩法与表现
 
 - 36 × 36 像素棋盘，共有三个演示关卡。
@@ -26,15 +28,18 @@
 
 - `index.html`：页面结构、界面样式与交互容器
 - `game.js`：关卡、玩法、渲染、动画与合成音效
+- `level-core.js`：关卡数据校验、生成和压力曲线的共享逻辑
 - `vendor/three.r147.min.js`：本地 Three.js r147 运行库
 
-通过静态文件服务器打开 `index.html` 即可运行在线结构。若需要不依赖服务器的单文件版本，执行：
+通过静态文件服务器打开 `index.html` 或 `generator.html` 即可运行在线结构。工坊使用 Web Worker 验证候选关卡，需要 HTTP 服务或在线地址，不能通过 `file://` 直接生成。游戏首页可导入工坊生成的 JSON；试玩链接把关卡数据放在 URL 中，无需本地存储。
+
+若需要不依赖服务器的单文件游戏版本，执行：
 
 ```sh
 python3 tools/build-standalone.py
 ```
 
-脚本会将页面、游戏逻辑和本地 Three.js 运行库内联，生成 `magic_fever_standalone.html`；该文件可离线直接打开。
+脚本会将页面、关卡校验逻辑、游戏逻辑和本地 Three.js 运行库内联，生成 `magic_fever_standalone.html`；该文件可离线直接打开并导入已有 JSON 关卡。
 
 ## 来源与许可
 

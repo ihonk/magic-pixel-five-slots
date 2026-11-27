@@ -9,6 +9,7 @@
    ========================================================================= */
 (function () {
   "use strict";
+  const playLocation = window.__MF_PLAY_LOCATION || location;
 
   window.addEventListener("error", function (e) {
     var el = document.getElementById("err");
@@ -137,10 +138,18 @@
     { name: "Level 2", map: makeStar() },
     { name: "Level 3", map: makeDonut() }
   ];
+  // Generated levels supply their own queues; do not regenerate or reshuffle them.
+  let customRaw = window.__MF_CUSTOM_LEVEL || null;
+  if (!customRaw && playLocation.hash && playLocation.hash.startsWith("#level=")) {
+    customRaw = JSON.parse(decodeURIComponent(playLocation.hash.slice(7)));
+  }
+  const customLevel = customRaw ? MFLevel.validateLevel(customRaw) : null;
+  if (customLevel) LEVELS.splice(0, LEVELS.length, customLevel);
+
   const META_TOTAL = 7;   // 通关面板 meta 进度条分母（原作录像 1/7）
 
   // ---------- 表现开关（新表现均可单独关闭；?classic=1 一键回退旧表现） ----------
-  const CLASSIC = /[?&]classic=1/.test(location.search);
+  const CLASSIC = /[?&]classic=1/.test(playLocation.search);
   const FX = {
     banner: !CLASSIC,     // 失败：Out of Space! 横幅 → Continue? 面板
     welldone: !CLASSIC,   // 通关：WELL DONE! + 彩纸 + 金币堆 + meta 进度条
@@ -151,7 +160,7 @@
 
   // ---------- 舞台缩放 ----------
   const stage = document.getElementById("stage");
-  const NOSCALE = /[?&]noscale=1/.test(location.search);
+  const NOSCALE = /[?&]noscale=1/.test(playLocation.search);
   if (NOSCALE) document.body.classList.add('noscale');
   function fitStage() {
     if (NOSCALE) { stage.style.transform = 'none'; return; }
@@ -914,6 +923,7 @@
   const linkedPairs = [];
   let lastPairMarkup = "";
   function renderPairLinks() {
+    if (window.__MF_HEADLESS) return;
     const layer = document.getElementById("pairLinks");
     let markup = "";
     linkedPairs.forEach(function (pair) {
@@ -1020,14 +1030,17 @@
     }
     wizards.length = 0;
 
+    const laneRows = [0, 0, 0];
     colorCharges.forEach(function (pair, idx) {
+      const lane = Number.isInteger(pair[2]) ? pair[2] : idx % LANES;
+      const row = laneRows[lane]++;
       const mesh = makeWizard(pair[0], pair[1]);
-      const spot = groundSpot(idx, colorCharges.length);
+      const spot = FX.ground ? laneSpot(lane, row) : groundSpot(idx, colorCharges.length);
       mesh.position.set(wx(spot.x), wy(spot.y), 5);
       scene.add(mesh);
       wizards.push({
-        mesh: mesh, slot: null, state: "ground", order: idx, moving: false, cooldown: 0,
-        lane: idx % LANES,
+        id: pair[3] || ("W" + idx), mesh: mesh, slot: null, state: "ground", order: idx, moving: false, cooldown: 0,
+        lane: lane,
         homeX: wx(spot.x), homeY: wy(spot.y)
       });
     });
@@ -1174,7 +1187,7 @@
     hideOverlay();
 
     const lv = LEVELS[n % LEVELS.length];
-    document.getElementById("levelTag").textContent = "Level " + (n + 1);
+    document.getElementById("levelTag").textContent = customLevel ? customLevel.name.slice(0,20) : "Level " + (n + 1);
     buildBoard(lv.map);
 
     // 按颜色统计连通块数量 → 每个连通块需要一次施法
@@ -1189,6 +1202,11 @@
 
     // 每个颜色按 2 次一组拆成多个巫师（对应原游戏队伍里有重复颜色）
     const roster = [];
+    if (lv.lanes) {
+      lv.lanes.forEach(function (lane, index) {
+        lane.forEach(function (w, row) { roster.push([w.color, w.charges, index, "L" + index + "-" + row]); });
+      });
+    } else {
     COLORS.forEach(function (ck) {
       let left = compCount[ck] || 0;
       while (left > 0) {
@@ -1204,6 +1222,7 @@
       if (ua !== ub) return ub - ua;
       return b[1] - a[1];
     });
+    }
     buildWizards(roster);
     configureLinks(lv.links || []);
 
@@ -1842,14 +1861,26 @@
 
   document.getElementById("restartBtn").onclick = function () { startLevel(state.level); };
 
+  const importControl = document.getElementById("importLevel");
+  if (importControl) importControl.onchange = async function () {
+    const file = importControl.files && importControl.files[0]; if (!file) return;
+    try {
+      if (file.size > 200000) throw new Error("关卡文件不能超过 200 KB");
+      const level = MFLevel.validateLevel(JSON.parse(await file.text()));
+      playLocation.hash = "level=" + encodeURIComponent(JSON.stringify(level));
+      playLocation.reload();
+    } catch (error) { showHint("导入失败：" + error.message); }
+    importControl.value = "";
+  };
+
   // ---------- 启动 ----------
-  AUTO = /[?&]auto=1/.test(location.search);
+  AUTO = /[?&]auto=1/.test(playLocation.search);
   const SIM = (function () {
-    const m = location.search.match(/[?&]sim=([\d.]+)/);
+    const m = playLocation.search.match(/[?&]sim=([\d.]+)/);
     return m ? parseFloat(m[1]) : 0;
   })();
 
-  const LV = /[?&]level=(\d+)/.exec(location.search);
+  const LV = /[?&]level=(\d+)/.exec(playLocation.search);
   startLevel(LV ? Math.max(0, Math.min(LEVELS.length - 1, (+LV[1]) - 1)) : 0);
 
   if (SIM > 0) {
@@ -1857,7 +1888,7 @@
     const steps = Math.max(1, Math.round(SIM * 60));
     for (let i = 0; i < steps; i++) { gameTime = (i + 1) / 60; step(1 / 60, gameTime); }
     renderer.render(scene, camera);
-  } else if (/[?&]probe=1/.test(location.search)) {
+  } else if (/[?&]probe=1/.test(playLocation.search)) {
     // 扫描：找出"同时点燃的格子数"最多的时刻（用来截引信正在烧的那一帧）
     let maxN = 0, maxT = 0;
     for (let s = 0; s < 60 * 24; s++) {
@@ -1892,13 +1923,14 @@
 
   window.__mf = {
     state: state, grid: grid, startLevel: startLevel, linkedPairs: linkedPairs,
+    isGroundHead: isGroundHead, boardingStatus: boardingStatus,
     beltPosition: beltPosition, columnUnderWizard: columnUnderWizard,
     step: step, fire: fireAtColumn, send: sendToSlot, wizards: wizards,
     win: win, fail: fail, revive: revive, FX: FX
   };
 
   // 调试：?tap=1 用合成指针事件验证点击选中链路
-  if (/[?&]tap=1/.test(location.search)) {
+  if (/[?&]tap=1/.test(playLocation.search)) {
     setTimeout(function () {
       const w = wizards.find(function (x) { return x.state === "ground" && x.slot === null; });
       if (!w) { document.title = "tap: no ground wizard"; return; }
@@ -1917,14 +1949,14 @@
 
   // 调试：?panel=win / ?panel=fail（横幅→面板）/ ?panel=cont（直接 Continue 面板）
   function instantOverlay() { overlayEl.classList.add("instant"); }
-  if (/[?&]panel=win/.test(location.search)) setTimeout(function () { win(); instantOverlay(); }, 300);
-  if (/[?&]panel=fail/.test(location.search)) setTimeout(fail, 300);
-  if (/[?&]panel=cont/.test(location.search)) setTimeout(function () {
+  if (/[?&]panel=win/.test(playLocation.search)) setTimeout(function () { win(); instantOverlay(); }, 300);
+  if (/[?&]panel=fail/.test(playLocation.search)) setTimeout(fail, 300);
+  if (/[?&]panel=cont/.test(playLocation.search)) setTimeout(function () {
     state.queue.slice(0, 5).forEach(sendToSlot);
     fail(); showContinue(); instantOverlay();
   }, 300);
 
-  if (/[?&]dbg=1/.test(location.search)) {
+  if (/[?&]dbg=1/.test(playLocation.search)) {
     setTimeout(function () {
       var r = stage.getBoundingClientRect(), cb = canvas.getBoundingClientRect();
       document.title = "stage=" + Math.round(r.left) + "," + Math.round(r.top) + "," + Math.round(r.width) + "x" + Math.round(r.height)

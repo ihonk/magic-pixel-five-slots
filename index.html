@@ -28,6 +28,9 @@
 
   #pairLinks { position:absolute; inset:0; width:448px; height:960px; pointer-events:none; overflow:hidden; }
 
+  .workshop-entry { position:absolute; top:54px; left:10px; display:flex; gap:8px; pointer-events:auto; font-size:12px; }
+  .workshop-entry a,.workshop-entry label { color:#fff5d1; text-decoration:none; padding:6px 10px; border:1px solid #d5b27b; background:#543d2bbd; border-radius:10px; cursor:pointer; }
+
   /* ---------- HUD ---------- */
   #hud { position: absolute; inset: 0; pointer-events: none; }
   .level-tag {
@@ -293,6 +296,7 @@
     <svg id="pairLinks" viewBox="0 0 448 960" aria-label="法师绑定连线"></svg>
     <div id="hud">
       <div class="level-tag" id="levelTag">Level 1</div>
+      <div class="workshop-entry"><a href="./generator.html">关卡工坊</a><label>导入关卡<input type="file" id="importLevel" accept=".json,application/json" hidden></label></div>
       <button class="gear" id="restartBtn" type="button" aria-label="重新开始本关" style="pointer-events:auto;cursor:pointer;padding:0">↻</button>
       <div class="scroll"><span id="countTxt">0/5</span></div>
       <div id="hint">点法师登上传送带 → 对准同色后自动施法</div>
@@ -304,6 +308,7 @@
 </div>
 
 <script src="./vendor/three.r147.min.js"></script>
-<script src="./game.js?v=linked-pairs-1"></script>
+<script src="./level-core.js?v=1"></script>
+<script src="./game.js?v=level-workshop-1"></script>
 </body>
 </html>
