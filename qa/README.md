@@ -1,25 +1,28 @@
-# Magic Fever QA
+# Magic Fever 质量检查
 
-Run the deterministic production-logic checks with:
+运行针对正式游戏逻辑的确定性检查：
 
 ```sh
 node qa/test-game.mjs
 ```
 
-The harness extracts and evaluates the repository's real gameplay functions. It
-does not copy the algorithms. DOM/WebGL-heavy reset behavior is checked against
-the production function bodies. Covered behavior:
+测试脚本会提取并执行仓库中的实际玩法函数，不会另行复制算法。涉及 DOM 或 WebGL 的重置行为，则直接检查正式函数实现。覆盖内容如下：
 
-- four-direction connectivity (including L shapes and excluding diagonals);
-- lowest occupied cell exposure independently for every column;
-- largest exposed same-color target selection;
-- five-full-slot deadlock;
-- fuse traversal and largest exposed-component targeting;
-- cyclic belt spacing/wrapping, current-position column mapping, and vertical fire alignment;
-- five-carrier capacity plus belt offset/texture reset;
-- five-slot deadlock and pending-shot resolution guards;
-- continue/revive preserving charges and queue order;
-- restart cleanup of timers, projectiles, flashes, particles, hints, and intro;
-- inter-level transition scheduling and wizard GPU resource disposal.
+- 四方向连通判断，包括 L 形连通并排除斜向连接；
+- 分别判断每一列最底部仍存在的方块；
+- 选择底部露出的最大同色目标区域；
+- 五个槽位占满时的僵局判断；
+- 引信消除遍历及最大露出连通区域的目标选择；
+- 循环传送带的间距与回绕、巫师当前位置对应的列，以及竖直发射对齐；
+- 五名巫师的传送带容量，以及传送带偏移和纹理重置；
+- 三列纵队各自仅允许队首上场、队首离开后解锁下一位，以及重复上场的拦截；
+- 复活返回的巫师恢复各自纵队的队首优先级；
+- 经典布局下的巫师自由选择；
+- 五槽僵局判断和待处理发射的结算保护；
+- 继续游戏或复活时保留施法次数和队列顺序；
+- 重新开始时清理计时器、投射物、闪光、粒子、提示和过场；
+- 关卡切换的定时调度，以及巫师 GPU 资源释放。
 
-This is intentionally dependency-free so it can run in CI or locally with Node.
+此检查不依赖额外软件包，可在 CI 或本地通过 Node.js 运行。
+
+2026-11-27 本地修复后，19 项检查全部通过。已补充纵队点击顺序的回归检查，并将传送带速度断言更新为当前的每秒 200 个设计像素公式。

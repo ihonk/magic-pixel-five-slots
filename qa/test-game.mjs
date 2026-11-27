@@ -34,7 +34,57 @@ test('autoFire only attacks the currently aligned exposed same-color column',()=
 
 test('fireAtColumn rejects cross-column calls and fires a vertical streak from current x',()=>{const s=fnSource('fireAtColumn');assert.match(s,/col\s*!==\s*columnUnderWizard\(w\)/);assert.match(s,/targetX\s*=\s*w\.mesh\.position\.x\s*\+\s*W\s*\/\s*2/);assert.match(s,/fireStreak\(targetX,\s*sourceY,\s*targetDesignY/);assert.doesNotMatch(s,/SLOT_X\[/);});
 
-test('belt movement advances at configured speed and wraps by full length',()=>{const s=fnSource('advanceBelt');assert.match(s,/beltOffset\s*=\s*\(beltOffset\s*\+\s*BELT_SPEED\s*\*\s*rate\s*\*\s*dt\)\s*%\s*BELT_LENGTH/);assert.match(source,/const BELT_LEFT\s*=\s*-48,\s*BELT_LENGTH\s*=\s*W\s*\+\s*96,\s*BELT_SPEED\s*=\s*48/);assert.match(source,/BELT_BOOST\s*=\s*1\.5,\s*BELT_RUSH\s*=\s*BELT_BOOST\s*\*\s*1\.5/);});
+test('belt movement advances at configured speed and wraps by full length',()=>{const s=fnSource('advanceBelt');assert.match(s,/beltOffset\s*=\s*\(beltOffset\s*\+\s*BELT_SPEED\s*\*\s*rate\s*\*\s*dt\)\s*%\s*BELT_LENGTH/);assert.match(source,/const BELT_LEFT\s*=\s*-48,\s*BELT_LENGTH\s*=\s*W\s*\+\s*96,\s*BELT_SPEED\s*=\s*48/);assert.match(source,/BELT_BOOST\s*=\s*1\.5,\s*BELT_RUSH\s*=\s*200\s*\/\s*BELT_SPEED/);});
+
+function groundQueueApi(groundLayout = true) {
+  const queue = Array.from({length: 6}, (_, id) => ({
+    id, lane: id % 3, state: 'ground', slot: null, moving: false
+  }));
+  const state = {queue, slots: Array(5).fill(null), running: true, over: false};
+  const code = ['isGroundHead', 'sendToSlot', 'revive'].map(fnSource).join('\n');
+  const api = new Function(
+    'state', 'FX', 'W', 'BELT_LENGTH', 'beltPosition', 'placeInSlot',
+    'relayoutGround', 'updateCounter', 'showHint', 'hideOverlay',
+    `${code}; return {sendToSlot, revive};`
+  )(
+    state, {ground: groundLayout}, 448, 544, i => 40 + i * 80,
+    (w, idx) => { w.state = 'slot'; w.slot = idx; w.moving = true; },
+    () => {}, () => {}, () => {}, () => {}
+  );
+  return {...api, state, wizards: queue.slice()};
+}
+
+test('each ground lane admits only its head and unlocks the next wizard on departure', () => {
+  const {sendToSlot, state, wizards} = groundQueueApi();
+  const originalQueue = state.queue.slice();
+  for (const w of wizards.slice(3)) assert.equal(sendToSlot(w), false);
+  assert.deepEqual(state.queue, originalQueue);
+  assert.ok(state.slots.every(w => w === null));
+  assert.ok(wizards.every(w => w.state === 'ground' && w.slot === null));
+  assert.equal(sendToSlot(wizards[2]), true);
+  assert.equal(sendToSlot(wizards[3]), false);
+  assert.equal(sendToSlot(wizards[0]), true);
+  assert.equal(sendToSlot(wizards[0]), false);
+  assert.equal(sendToSlot(wizards[3]), true);
+  assert.equal(sendToSlot(wizards[4]), false);
+  assert.equal(sendToSlot(wizards[5]), true);
+});
+
+test('revived wizards regain lane priority over the waiting ground queue', () => {
+  const {sendToSlot, revive, state, wizards} = groundQueueApi();
+  for (const w of wizards.slice(0, 3)) assert.equal(sendToSlot(w), true);
+  revive();
+  assert.deepEqual(state.queue.map(w => w.id), [0, 1, 2, 3, 4, 5]);
+  for (const w of wizards.slice(3)) assert.equal(sendToSlot(w), false);
+  assert.equal(sendToSlot(wizards[1]), true);
+  assert.equal(sendToSlot(wizards[4]), true);
+  assert.equal(sendToSlot(wizards[3]), false);
+});
+
+test('classic ground layout retains free wizard selection', () => {
+  const {sendToSlot, wizards} = groundQueueApi(false);
+  assert.equal(sendToSlot(wizards[5]), true);
+});
 
 test('send capacity remains five carriers and rejects a sixth wizard',()=>{const s=fnSource('sendToSlot');assert.match(s,/for\s*\(let i\s*=\s*0;\s*i\s*<\s*5;\s*i\+\+\)/);assert.match(s,/if\s*\(idx\s*<\s*0\)[^]*return false/);assert.match(s,/state\.slots\[idx\]\s*=\s*w/);});
 

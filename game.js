@@ -1067,7 +1067,7 @@
     if (t < 1.6) return;
     if (t - _lastAuto < 1.1) return;
     _lastAuto = t;
-    const ground = wizards.filter(function (x) { return x.state === "ground" && x.slot === null; });
+    const ground = state.queue.filter(isGroundHead);
     const w = ground.find(function (x) { return legalColumnsForColor(x.mesh.userData.colorKey).length > 0; }) || ground[0];
     if (w) sendToSlot(w);
   }
@@ -1179,10 +1179,19 @@
   }
 
   // ---------- 上场与自动发射 ----------
-  // 玩家从小径下方选一个巫师送上去；上位后若存在可消除的方块，自动发射
+  // 三列纵队各自按队列顺序上场，复活退回队首的巫师也遵循此规则。
+  function isGroundHead(w) {
+    if (w.state !== "ground" || w.slot !== null) return false;
+    if (!FX.ground) return true;
+    return state.queue.find(function (x) {
+      return x.state === "ground" && x.slot === null && x.lane === w.lane;
+    }) === w;
+  }
+
+  // 玩家从每列队首选一个巫师送上去；上位后若存在可消除的方块，自动发射
   function sendToSlot(w) {
     if (state.over || !state.running) return false;
-    if (w.slot !== null || w.state !== "ground") return false;
+    if (!isGroundHead(w)) return false;
     let idx = -1;
     let leftmost = Infinity;
     for (let i = 0; i < 5; i++) if (!state.slots[i]) {
