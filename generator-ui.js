@@ -3,7 +3,7 @@
   const $=id=>document.getElementById(id),form=$('settings');
   const colors={R:'#C6383F',B:'#3D8FE0',G:'#81C94B',Y:'#EFC53F',P:'#E2449B'};
   let worker=null,current=null,busy=false,generation=0;
-  function readOptions(){const data=new FormData(form);return {difficulty:data.get('difficulty'),rhythm:data.get('rhythm'),pairs:Number(data.get('pairs')),seed:String(data.get('seed')).trim()};}
+  function readOptions(){const data=new FormData(form);return {difficulty:data.get('difficulty'),rhythm:data.get('rhythm'),pairs:Number(data.get('pairs')),seed:String(data.get('seed')).trim(),locks:Number(data.get('locks')||0),lockHits:Number(data.get('lockHits')||2),lockColor:data.get('lockColor')||'random'};}
   function setBusy(value){
     busy=value;for(const el of form.querySelectorAll('input,select,button'))el.disabled=value;
     $('cancel').disabled=false;$('cancel').hidden=!value;
@@ -13,7 +13,7 @@
     $('verificationState').textContent=value?'正在运行通关验证':current?'✓ 自动通关已验证':'等待生成';
   }
   function status(text,error=false){$('status').textContent=text;$('status').classList.toggle('error',error);}
-  function drawBoard(map){
+  function drawBoard(map,locks=[]){
     const ctx=$('board').getContext('2d'),cell=20;ctx.clearRect(0,0,720,720);ctx.fillStyle='#303442';ctx.fillRect(0,0,720,720);
     for(let y=0;y<36;y++)for(let x=0;x<36;x++){
       const color=map&&colors[map[y][x]];
@@ -23,6 +23,13 @@
       const fill=ctx.createLinearGradient(px,py,px,py+w);fill.addColorStop(0,color);fill.addColorStop(1,color);
       ctx.fillStyle=fill;ctx.beginPath();ctx.moveTo(px+3,py);ctx.lineTo(px+w-3,py);ctx.quadraticCurveTo(px+w,py,px+w,py+3);ctx.lineTo(px+w,py+w-3);ctx.quadraticCurveTo(px+w,py+w,px+w-3,py+w);ctx.lineTo(px+3,py+w);ctx.quadraticCurveTo(px,py+w,px,py+w-3);ctx.lineTo(px,py+3);ctx.quadraticCurveTo(px,py,px+3,py);ctx.fill();
       ctx.fillStyle='#ffffff3b';ctx.fillRect(px+2,py+1,w-4,2);ctx.fillStyle='#00000022';ctx.fillRect(px+1,py+w-3,w-2,2);
+    }
+    for(const lock of locks){
+      const x=lock.x*cell,y=lock.y*cell,w=lock.width*cell,h=lock.height*cell,cx=x+w/2,cy=y+h/2;
+      ctx.save();ctx.fillStyle=colors[lock.color];ctx.globalAlpha=.27;ctx.fillRect(x,y,w,h);ctx.globalAlpha=1;
+      ctx.strokeStyle='#fff0bd';ctx.lineWidth=3;ctx.setLineDash([7,4]);ctx.strokeRect(x+1,y+1,w-2,h-2);ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(cx,cy-10,10,Math.PI,0);ctx.stroke();ctx.fillStyle=colors[lock.color];ctx.fillRect(cx-18,cy-11,36,34);ctx.strokeRect(cx-18,cy-11,36,34);
+      ctx.font='900 25px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=3;ctx.strokeStyle='#2a1b24';ctx.strokeText(String(lock.hits),cx,cy+7);ctx.fillStyle='white';ctx.fillText(String(lock.hits),cx,cy+7);ctx.restore();
     }
   }
   function drawCurve(target,measured){
@@ -49,11 +56,11 @@
     });
   }
   function render(level){
-    current=level;$('previewTitle').textContent=level.name;$('empty').hidden=true;$('board').classList.add('ready');drawBoard(level.map);
-    $('pixels').textContent=level.stats.pixels;$('components').textContent=level.stats.components;$('rosterCount').textContent=level.stats.wizards+' / '+level.links.length+' 对';$('seconds').textContent=level.verification.seconds+'s';
+    current=level;$('previewTitle').textContent=level.name;$('empty').hidden=true;$('board').classList.add('ready');drawBoard(level.map,level.locks||[]);
+    $('pixels').textContent=level.stats.pixels;$('components').textContent=level.stats.components;$('rosterCount').textContent=level.stats.wizards;$('pairStat').textContent=level.links.length;$('lockStat').textContent=(level.locks||[]).length+' / '+(level.stats.lockShots||0);$('seconds').textContent=level.verification.seconds+'s';
     drawCurve(level.generation.target,level.verification.measured);renderQueues(level);
     const v=level.verification,g=level.generation;
-    $('analysis').textContent=g.passedCandidates+' / '+g.candidates+' 个候选通过自动通关验证，其中 '+g.rhythmMatchedCandidates+' 个符合节奏趋势 · 峰值占用 '+v.peakOccupancy+'/5 · 无复活 · 节奏拟合偏差 '+Math.round(g.fitError*100)+'。验证是在 60 Hz 的真实游戏逻辑中执行，试玩操作时机不同可能产生不同过程。';
+    $('analysis').textContent=g.passedCandidates+' / '+g.candidates+' 个候选通过自动通关验证，其中 '+g.rhythmMatchedCandidates+' 个符合节奏趋势 · '+(level.locks||[]).length+' 块色锁 · 峰值占用 '+v.peakOccupancy+'/5 · 无复活 · 节奏拟合偏差 '+Math.round(g.fitError*100)+'。验证是在 60 Hz 的真实游戏逻辑中执行，试玩操作时机不同可能产生不同过程。';
     const list=$('solutionList');list.replaceChildren();
     const named=new Map();level.lanes.forEach((lane,index)=>lane.forEach((w,row)=>named.set('L'+index+'-'+row,['左','中','右'][index]+'列第 '+(row+1)+' 人')));
     v.actions.forEach(action=>{const li=document.createElement('li');li.textContent=action.time.toFixed(2)+'s · 点击'+(named.get(action.id)||action.id);list.append(li);});
@@ -66,7 +73,7 @@
     if(typeof Worker==='undefined'){status('此浏览器不支持后台验证，请换用支持 Web Worker 的浏览器。',true);return;}
     const job=++generation;
     setBusy(true);status('正在构造地图、队列与连线，并运行第一批候选…');
-    try {worker=new Worker(new URL('./generator-worker.js?v=1',location.href));}catch(error){setBusy(false);status('无法启动验证：'+error.message,true);return;}
+    try {worker=new Worker(new URL('./generator-worker.js?v=locks-1',location.href));}catch(error){setBusy(false);status('无法启动验证：'+error.message,true);return;}
     worker.onmessage=({data})=>{
       if(job!==generation)return;
       if(data.type==='progress')status('验证候选 '+data.attempt+' / '+data.total+' · 已有 '+data.passed+' 个可通关结果');

@@ -29,3 +29,10 @@ assert.ok(game.state.slots.every(w=>w===null));
 assert.equal(game.linkedPairs.length,1);
 assert.ok(game.linkedPairs[0].members.every(w=>w.state==='ground'&&w.slot===null));
 console.log('✓ restart clears pending boarding and restores the linked roster');
+
+const lockDemo=loadGame({search:'?auto=1&level=4&sim=60',scripts:['level-core.js','game.js']});
+assert.equal(lockDemo.game.locks.length,1);
+assert.equal(lockDemo.game.locks[0].remaining,0);
+assert.equal(lockDemo.game.isBoardCleared(),true);
+assert.equal(lockDemo.game.state.over,true);
+console.log('✓ built-in lock challenge unlocks and clears under real game auto-play');

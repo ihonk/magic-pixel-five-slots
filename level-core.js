@@ -38,7 +38,7 @@
       });
     });
     if(count<1||count>96)throw Error('法师总数需要在 1–96 之间');
-    for(const color of COLORS)if((ammo[color]||0)<groups.filter(g=>g.color===color).length)throw Error('颜色 '+color+' 的弹药不足以清空连通区域');
+
     const occupied=new Set(),ids=new Set();
     if(raw.links!==undefined&&!Array.isArray(raw.links))throw Error('links 必须是数组');
     const links=(raw.links||[]).map(link=>{
@@ -52,7 +52,27 @@
       if(members[0][0]===members[1][0])throw Error('绑定成员必须来自不同列');
       return {id:link.id,members};
     });
-    return {version:1,name:String(raw.name||'生成关卡').slice(0,48),map:raw.map.slice(),lanes,links};
+    if(raw.locks!==undefined&&!Array.isArray(raw.locks))throw Error('locks 必须是数组');
+    if((raw.locks||[]).length>4)throw Error('最多设置 4 个锁区');
+    const lockCells=new Set(),lockIds=new Set();
+    const locks=(raw.locks||[]).map(lock=>{
+      if(!lock||typeof lock.id!=='string'||!/^[A-Z0-9]{1,6}$/.test(lock.id)||lockIds.has(lock.id))throw Error('锁区编号必须唯一且为 1–6 位大写字母或数字');
+      lockIds.add(lock.id);
+      for(const key of ['x','y','width','height','hits'])if(!Number.isInteger(lock[key]))throw Error('锁区坐标、尺寸与命中次数必须是整数');
+      if(lock.x<0||lock.y<0||lock.width<1||lock.width>6||lock.height<1||lock.height>6||lock.x+lock.width>36||lock.y+lock.height>36)throw Error('锁区超出棋盘或尺寸不在 1–6 格之间');
+      if(!COLORS.includes(lock.color)||lock.hits<1||lock.hits>3)throw Error('锁颜色不合法或数字不在 1–3 之间');
+      let pixels=0;
+      for(let y=lock.y;y<lock.y+lock.height;y++)for(let x=lock.x;x<lock.x+lock.width;x++){
+        const key=y*36+x;if(lockCells.has(key))throw Error('锁区不能相互重叠');lockCells.add(key);if(raw.map[y][x]!=='.')pixels++;
+      }
+      if(!pixels)throw Error('锁区必须覆盖至少一个像素');
+      return {id:lock.id,x:lock.x,y:lock.y,width:lock.width,height:lock.height,color:lock.color,hits:lock.hits};
+    });
+    for(const color of COLORS){
+      const required=groups.filter(g=>g.color===color).length+locks.filter(l=>l.color===color).reduce((sum,l)=>sum+l.hits,0);
+      if((ammo[color]||0)<required)throw Error('颜色 '+color+' 的弹药不足以清空像素和解锁');
+    }
+    return {version:1,name:String(raw.name||'生成关卡').slice(0,48),map:raw.map.slice(),lanes,links,locks};
   }
   function profile(difficulty,rhythm) {
     const base={easy:.26,normal:.50,hard:.75}[difficulty];if(base===undefined)throw Error('未知难度');
@@ -70,6 +90,8 @@
   function generateCandidate(options={},attempt=0) {
     const difficulty=options.difficulty||'normal', rhythm=options.rhythm||'rising', seed=String(options.seed||'MAGIC-01').slice(0,80);
     const requested=Number(options.pairs===undefined?1:options.pairs);
+    const lockCount=Number(options.locks===undefined?0:options.locks),lockHits=Number(options.lockHits===undefined?2:options.lockHits),lockColor=options.lockColor||'random';
+    if(!Number.isInteger(lockCount)||lockCount<0||lockCount>4||!Number.isInteger(lockHits)||lockHits<1||lockHits>3||!(lockColor==='random'||COLORS.includes(lockColor)))throw Error('锁区参数不合法');
     if(!Number.isInteger(requested)||requested<0||requested>4)throw Error('绑定数量需要在 0–4 之间');
     const target=profile(difficulty,rhythm),rng=random(seed+':'+attempt),palette=shuffle(COLORS,rng).slice(0,difficulty==='easy'?3:difficulty==='normal'?4:5);
     const map=Array.from({length:36},()=>Array(36).fill('.'));
@@ -82,19 +104,53 @@
         for(let i=0;i<segments;i++)for(let y=top;y<=low;y++)for(let x=cuts[i];x<cuts[i+1];x++)map[y][x]=colors[i];
       }
     }
-    // A constructive removal ordering is used to order the queues. Actual game
-    // replay below (in the worker) still decides whether the candidate is valid.
-    const working=map.map(r=>r.slice()), trace=[];let removed=0;const total=map.flat().filter(c=>c!=='.').length;
-    while(removed<total) {
-      const visible=shuffle(exposedGroups(working),rng).sort((a,b)=>Math.max(...b.cells.map(k=>Math.floor(k/36)))-Math.max(...a.cells.map(k=>Math.floor(k/36))));
-      const g=visible[0];trace.push({color:g.color,progress:removed/total,cells:g.cells.length});
-      for(const k of g.cells)working[Math.floor(k/36)][k%36]='.';removed+=g.cells.length;
+    const locks=[],used=new Set();
+    for(let n=0;n<lockCount;n++){
+      const stageFor=k=>Math.max(0,Math.min(5,Math.floor((35-Math.floor(k/36))/6)));
+      const choices=shuffle(components(map).flatMap(g=>g.cells),rng).sort((a,b)=>target[stageFor(b)]-target[stageFor(a)]);let placed=false;
+      for(const cell of choices){
+        const x=Math.max(0,Math.min(32,cell%36-1)),y=Math.max(0,Math.min(33,Math.floor(cell/36)-1)),width=4,height=3;
+        const cells=[];for(let yy=y;yy<y+height;yy++)for(let xx=x;xx<x+width;xx++)cells.push(yy*36+xx);
+        if(cells.some(k=>used.has(k)))continue;
+        cells.forEach(k=>used.add(k));locks.push({id:'L'+(n+1),x,y,width,height,color:lockColor==='random'?palette[Math.floor(rng()*palette.length)]:lockColor,hits:lockHits});placed=true;break;
+      }
+      if(!placed)throw Error('没有足够空间放置锁区');
+    }
+    // Construct queues with both lock-opening shots and normal pixel shots.
+    // The worker still replays the production game to certify a winning path.
+    const working=map.map(r=>r.slice()), trace=[],active=locks.map(l=>({...l,remaining:l.hits}));let removed=0;
+    const total=map.flat().filter(c=>c!=='.').length;
+    while(removed<total){
+      const blocked=new Map();active.filter(l=>l.remaining>0).forEach(l=>{for(let y=l.y;y<l.y+l.height;y++)for(let x=l.x;x<l.x+l.width;x++)blocked.set(y*36+x,l);});
+      const free=working.map((row,y)=>row.map((color,x)=>blocked.has(y*36+x)?'.':color));
+      const index=new Map();components(free).forEach(group=>group.cells.forEach(k=>index.set(k,group)));
+      const choices=new Map();
+      for(let x=0;x<36;x++)for(let y=35;y>=0;y--){
+        const k=y*36+x,lock=blocked.get(k);
+        if(lock){choices.set(lock,{lock,color:lock.color,cells:[],bottom:y});break;}
+        if(working[y][x]!=='.'){const group=index.get(k);choices.set(group,{...group,bottom:Math.max(...group.cells.map(i=>Math.floor(i/36)))});break;}
+      }
+      const g=shuffle([...choices.values()],rng).sort((a,b)=>b.bottom-a.bottom)[0];
+      if(!g)throw Error('关卡构造没有可达目标');
+      trace.push({color:g.color,progress:removed/total,cells:g.cells.length,lock:!!g.lock});
+      if(g.lock)g.lock.remaining--;else{for(const k of g.cells)working[Math.floor(k/36)][k%36]='.';removed+=g.cells.length;}
     }
     const units=[];
     for(const hit of trace){
       const last=units[units.length-1],p=target[Math.min(5,Math.floor(hit.progress*6))];
-      if(last&&last.color===hit.color&&last.charges<2&&rng()<p){last.charges++;continue;}
-      units.push({color:hit.color,charges:1,progress:hit.progress});
+      if(last&&!last.lock&&!hit.lock&&last.color===hit.color&&last.charges<2&&rng()<p){last.charges++;continue;}
+      units.push({color:hit.color,charges:1,progress:hit.progress,lock:hit.lock});
+    }
+    // Locks can split one original colour component into several separately
+    // removable pieces. Budget the atomic outside/inside pieces so shot order
+    // cannot exhaust a colour needed for a remaining lock or protected fragment.
+    const atomic=components(map.map((row,y)=>row.map((c,x)=>used.has(y*36+x)?'.':c)));
+    for(const lock of locks)atomic.push(...components(map.map((row,y)=>row.map((c,x)=>x>=lock.x&&x<lock.x+lock.width&&y>=lock.y&&y<lock.y+lock.height?c:'.'))));
+    for(const color of COLORS){
+      const required=atomic.filter(g=>g.color===color).length+locks.filter(l=>l.color===color).reduce((sum,l)=>sum+l.hits,0);
+      let extra=required-units.filter(u=>u.color===color).reduce((sum,u)=>sum+u.charges,0);
+      let pos=units.map(u=>u.color).lastIndexOf(color);
+      while(extra>0){const take=Math.min(2,extra);units.splice(pos+1,0,{color,charges:take,progress:pos>=0?units[pos].progress:0,lock:false});pos++;extra-=take;}
     }
     let prevLane=Math.floor(rng()*3);
     for(let i=0;i<units.length;i++) {
@@ -111,12 +167,14 @@
     const lanes=[[],[],[]],links=[];
     for(const u of units){u.row=lanes[u.lane].length;lanes[u.lane].push({color:u.color,charges:u.charges});}
     for(let i=0;i<pairCount;i++){const id=String.fromCharCode(65+i);links.push({id,members:units.filter(u=>u.pair===id).map(u=>[u.lane,u.row])});}
-    const clean=validateLevel({version:1,name:'工坊 · '+({easy:'轻松',normal:'标准',hard:'挑战'}[difficulty])+' · '+seed,map:map.map(r=>r.join('')),lanes,links});
-    return {...clean,generation:{seed,attempt,difficulty,rhythm,target,requestedPairs:requested},stats:{pixels:total,components:trace.length,wizards:units.length}};
+    const clean=validateLevel({version:1,name:'工坊 · '+({easy:'轻松',normal:'标准',hard:'挑战'}[difficulty])+' · '+seed,map:map.map(r=>r.join('')),lanes,links,locks});
+    return {...clean,generation:{seed,attempt,difficulty,rhythm,target,requestedPairs:requested,locks:lockCount,lockHits,lockColor},stats:{pixels:total,components:components(map).length,lockShots:lockCount*lockHits,wizards:units.length}};
   }
   function pressure(game) {
     const g=game.grid,heads=game.state.queue.filter(w=>game.isGroundHead(w)),colors=new Set(),allColors=new Set(g.filter(c=>c.alive).map(c=>c.color));
-    for(let x=0;x<36;x++)for(let y=35;y>=0;y--)if(g[y*36+x].alive){colors.add(g[y*36+x].color);break;}
+    if(game.attackTarget)for(let x=0;x<36;x++){const target=game.attackTarget(x);if(target&&target.available)colors.add(target.color);}
+    else for(let x=0;x<36;x++)for(let y=35;y>=0;y--)if(g[y*36+x].alive){colors.add(g[y*36+x].color);break;}
+    if(game.locks)game.locks.filter(l=>l.remaining>0).forEach(l=>allColors.add(l.color));
     const blocked=heads.filter(w=>!colors.has(w.mesh.userData.colorKey)||(w.partner&&!game.isGroundHead(w.partner))).length/Math.max(1,heads.length);
     const occupied=game.state.slots.filter(Boolean),waiting=occupied.filter(w=>w.mesh.userData.charges===0).length;
     // Local obstruction depth is measured from the live grid, not the requested

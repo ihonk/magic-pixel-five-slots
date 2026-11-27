@@ -26,7 +26,7 @@
   }
   #gl { position: absolute; inset: 0; width: 448px; height: 960px; display: block; }
 
-  #pairLinks { position:absolute; inset:0; width:448px; height:960px; pointer-events:none; overflow:hidden; }
+  #lockLayer,#pairLinks { position:absolute; inset:0; width:448px; height:960px; pointer-events:none; overflow:hidden; }
 
   .workshop-entry { position:absolute; top:54px; left:10px; display:flex; gap:8px; pointer-events:auto; font-size:12px; }
   .workshop-entry a,.workshop-entry label { color:#fff5d1; text-decoration:none; padding:6px 10px; border:1px solid #d5b27b; background:#543d2bbd; border-radius:10px; cursor:pointer; }
@@ -293,10 +293,11 @@
 <div id="wrap">
   <div id="stage">
     <canvas id="gl"></canvas>
+    <svg id="lockLayer" viewBox="0 0 448 960" aria-label="颜色数字锁区"></svg>
     <svg id="pairLinks" viewBox="0 0 448 960" aria-label="法师绑定连线"></svg>
     <div id="hud">
       <div class="level-tag" id="levelTag">Level 1</div>
-      <div class="workshop-entry"><a href="./generator.html">关卡工坊</a><label>导入关卡<input type="file" id="importLevel" accept=".json,application/json" hidden></label></div>
+      <div class="workshop-entry"><a href="./generator.html">关卡工坊</a><a href="?level=4">锁区试炼</a><label>导入关卡<input type="file" id="importLevel" accept=".json,application/json" hidden></label></div>
       <button class="gear" id="restartBtn" type="button" aria-label="重新开始本关" style="pointer-events:auto;cursor:pointer;padding:0">↻</button>
       <div class="scroll"><span id="countTxt">0/5</span></div>
       <div id="hint">点法师登上传送带 → 对准同色后自动施法</div>
@@ -355,7 +356,7 @@
       });
     });
     if(count<1||count>96)throw Error('法师总数需要在 1–96 之间');
-    for(const color of COLORS)if((ammo[color]||0)<groups.filter(g=>g.color===color).length)throw Error('颜色 '+color+' 的弹药不足以清空连通区域');
+
     const occupied=new Set(),ids=new Set();
     if(raw.links!==undefined&&!Array.isArray(raw.links))throw Error('links 必须是数组');
     const links=(raw.links||[]).map(link=>{
@@ -369,7 +370,27 @@
       if(members[0][0]===members[1][0])throw Error('绑定成员必须来自不同列');
       return {id:link.id,members};
     });
-    return {version:1,name:String(raw.name||'生成关卡').slice(0,48),map:raw.map.slice(),lanes,links};
+    if(raw.locks!==undefined&&!Array.isArray(raw.locks))throw Error('locks 必须是数组');
+    if((raw.locks||[]).length>4)throw Error('最多设置 4 个锁区');
+    const lockCells=new Set(),lockIds=new Set();
+    const locks=(raw.locks||[]).map(lock=>{
+      if(!lock||typeof lock.id!=='string'||!/^[A-Z0-9]{1,6}$/.test(lock.id)||lockIds.has(lock.id))throw Error('锁区编号必须唯一且为 1–6 位大写字母或数字');
+      lockIds.add(lock.id);
+      for(const key of ['x','y','width','height','hits'])if(!Number.isInteger(lock[key]))throw Error('锁区坐标、尺寸与命中次数必须是整数');
+      if(lock.x<0||lock.y<0||lock.width<1||lock.width>6||lock.height<1||lock.height>6||lock.x+lock.width>36||lock.y+lock.height>36)throw Error('锁区超出棋盘或尺寸不在 1–6 格之间');
+      if(!COLORS.includes(lock.color)||lock.hits<1||lock.hits>3)throw Error('锁颜色不合法或数字不在 1–3 之间');
+      let pixels=0;
+      for(let y=lock.y;y<lock.y+lock.height;y++)for(let x=lock.x;x<lock.x+lock.width;x++){
+        const key=y*36+x;if(lockCells.has(key))throw Error('锁区不能相互重叠');lockCells.add(key);if(raw.map[y][x]!=='.')pixels++;
+      }
+      if(!pixels)throw Error('锁区必须覆盖至少一个像素');
+      return {id:lock.id,x:lock.x,y:lock.y,width:lock.width,height:lock.height,color:lock.color,hits:lock.hits};
+    });
+    for(const color of COLORS){
+      const required=groups.filter(g=>g.color===color).length+locks.filter(l=>l.color===color).reduce((sum,l)=>sum+l.hits,0);
+      if((ammo[color]||0)<required)throw Error('颜色 '+color+' 的弹药不足以清空像素和解锁');
+    }
+    return {version:1,name:String(raw.name||'生成关卡').slice(0,48),map:raw.map.slice(),lanes,links,locks};
   }
   function profile(difficulty,rhythm) {
     const base={easy:.26,normal:.50,hard:.75}[difficulty];if(base===undefined)throw Error('未知难度');
@@ -387,6 +408,8 @@
   function generateCandidate(options={},attempt=0) {
     const difficulty=options.difficulty||'normal', rhythm=options.rhythm||'rising', seed=String(options.seed||'MAGIC-01').slice(0,80);
     const requested=Number(options.pairs===undefined?1:options.pairs);
+    const lockCount=Number(options.locks===undefined?0:options.locks),lockHits=Number(options.lockHits===undefined?2:options.lockHits),lockColor=options.lockColor||'random';
+    if(!Number.isInteger(lockCount)||lockCount<0||lockCount>4||!Number.isInteger(lockHits)||lockHits<1||lockHits>3||!(lockColor==='random'||COLORS.includes(lockColor)))throw Error('锁区参数不合法');
     if(!Number.isInteger(requested)||requested<0||requested>4)throw Error('绑定数量需要在 0–4 之间');
     const target=profile(difficulty,rhythm),rng=random(seed+':'+attempt),palette=shuffle(COLORS,rng).slice(0,difficulty==='easy'?3:difficulty==='normal'?4:5);
     const map=Array.from({length:36},()=>Array(36).fill('.'));
@@ -399,19 +422,53 @@
         for(let i=0;i<segments;i++)for(let y=top;y<=low;y++)for(let x=cuts[i];x<cuts[i+1];x++)map[y][x]=colors[i];
       }
     }
-    // A constructive removal ordering is used to order the queues. Actual game
-    // replay below (in the worker) still decides whether the candidate is valid.
-    const working=map.map(r=>r.slice()), trace=[];let removed=0;const total=map.flat().filter(c=>c!=='.').length;
-    while(removed<total) {
-      const visible=shuffle(exposedGroups(working),rng).sort((a,b)=>Math.max(...b.cells.map(k=>Math.floor(k/36)))-Math.max(...a.cells.map(k=>Math.floor(k/36))));
-      const g=visible[0];trace.push({color:g.color,progress:removed/total,cells:g.cells.length});
-      for(const k of g.cells)working[Math.floor(k/36)][k%36]='.';removed+=g.cells.length;
+    const locks=[],used=new Set();
+    for(let n=0;n<lockCount;n++){
+      const stageFor=k=>Math.max(0,Math.min(5,Math.floor((35-Math.floor(k/36))/6)));
+      const choices=shuffle(components(map).flatMap(g=>g.cells),rng).sort((a,b)=>target[stageFor(b)]-target[stageFor(a)]);let placed=false;
+      for(const cell of choices){
+        const x=Math.max(0,Math.min(32,cell%36-1)),y=Math.max(0,Math.min(33,Math.floor(cell/36)-1)),width=4,height=3;
+        const cells=[];for(let yy=y;yy<y+height;yy++)for(let xx=x;xx<x+width;xx++)cells.push(yy*36+xx);
+        if(cells.some(k=>used.has(k)))continue;
+        cells.forEach(k=>used.add(k));locks.push({id:'L'+(n+1),x,y,width,height,color:lockColor==='random'?palette[Math.floor(rng()*palette.length)]:lockColor,hits:lockHits});placed=true;break;
+      }
+      if(!placed)throw Error('没有足够空间放置锁区');
+    }
+    // Construct queues with both lock-opening shots and normal pixel shots.
+    // The worker still replays the production game to certify a winning path.
+    const working=map.map(r=>r.slice()), trace=[],active=locks.map(l=>({...l,remaining:l.hits}));let removed=0;
+    const total=map.flat().filter(c=>c!=='.').length;
+    while(removed<total){
+      const blocked=new Map();active.filter(l=>l.remaining>0).forEach(l=>{for(let y=l.y;y<l.y+l.height;y++)for(let x=l.x;x<l.x+l.width;x++)blocked.set(y*36+x,l);});
+      const free=working.map((row,y)=>row.map((color,x)=>blocked.has(y*36+x)?'.':color));
+      const index=new Map();components(free).forEach(group=>group.cells.forEach(k=>index.set(k,group)));
+      const choices=new Map();
+      for(let x=0;x<36;x++)for(let y=35;y>=0;y--){
+        const k=y*36+x,lock=blocked.get(k);
+        if(lock){choices.set(lock,{lock,color:lock.color,cells:[],bottom:y});break;}
+        if(working[y][x]!=='.'){const group=index.get(k);choices.set(group,{...group,bottom:Math.max(...group.cells.map(i=>Math.floor(i/36)))});break;}
+      }
+      const g=shuffle([...choices.values()],rng).sort((a,b)=>b.bottom-a.bottom)[0];
+      if(!g)throw Error('关卡构造没有可达目标');
+      trace.push({color:g.color,progress:removed/total,cells:g.cells.length,lock:!!g.lock});
+      if(g.lock)g.lock.remaining--;else{for(const k of g.cells)working[Math.floor(k/36)][k%36]='.';removed+=g.cells.length;}
     }
     const units=[];
     for(const hit of trace){
       const last=units[units.length-1],p=target[Math.min(5,Math.floor(hit.progress*6))];
-      if(last&&last.color===hit.color&&last.charges<2&&rng()<p){last.charges++;continue;}
-      units.push({color:hit.color,charges:1,progress:hit.progress});
+      if(last&&!last.lock&&!hit.lock&&last.color===hit.color&&last.charges<2&&rng()<p){last.charges++;continue;}
+      units.push({color:hit.color,charges:1,progress:hit.progress,lock:hit.lock});
+    }
+    // Locks can split one original colour component into several separately
+    // removable pieces. Budget the atomic outside/inside pieces so shot order
+    // cannot exhaust a colour needed for a remaining lock or protected fragment.
+    const atomic=components(map.map((row,y)=>row.map((c,x)=>used.has(y*36+x)?'.':c)));
+    for(const lock of locks)atomic.push(...components(map.map((row,y)=>row.map((c,x)=>x>=lock.x&&x<lock.x+lock.width&&y>=lock.y&&y<lock.y+lock.height?c:'.'))));
+    for(const color of COLORS){
+      const required=atomic.filter(g=>g.color===color).length+locks.filter(l=>l.color===color).reduce((sum,l)=>sum+l.hits,0);
+      let extra=required-units.filter(u=>u.color===color).reduce((sum,u)=>sum+u.charges,0);
+      let pos=units.map(u=>u.color).lastIndexOf(color);
+      while(extra>0){const take=Math.min(2,extra);units.splice(pos+1,0,{color,charges:take,progress:pos>=0?units[pos].progress:0,lock:false});pos++;extra-=take;}
     }
     let prevLane=Math.floor(rng()*3);
     for(let i=0;i<units.length;i++) {
@@ -428,12 +485,14 @@
     const lanes=[[],[],[]],links=[];
     for(const u of units){u.row=lanes[u.lane].length;lanes[u.lane].push({color:u.color,charges:u.charges});}
     for(let i=0;i<pairCount;i++){const id=String.fromCharCode(65+i);links.push({id,members:units.filter(u=>u.pair===id).map(u=>[u.lane,u.row])});}
-    const clean=validateLevel({version:1,name:'工坊 · '+({easy:'轻松',normal:'标准',hard:'挑战'}[difficulty])+' · '+seed,map:map.map(r=>r.join('')),lanes,links});
-    return {...clean,generation:{seed,attempt,difficulty,rhythm,target,requestedPairs:requested},stats:{pixels:total,components:trace.length,wizards:units.length}};
+    const clean=validateLevel({version:1,name:'工坊 · '+({easy:'轻松',normal:'标准',hard:'挑战'}[difficulty])+' · '+seed,map:map.map(r=>r.join('')),lanes,links,locks});
+    return {...clean,generation:{seed,attempt,difficulty,rhythm,target,requestedPairs:requested,locks:lockCount,lockHits,lockColor},stats:{pixels:total,components:components(map).length,lockShots:lockCount*lockHits,wizards:units.length}};
   }
   function pressure(game) {
     const g=game.grid,heads=game.state.queue.filter(w=>game.isGroundHead(w)),colors=new Set(),allColors=new Set(g.filter(c=>c.alive).map(c=>c.color));
-    for(let x=0;x<36;x++)for(let y=35;y>=0;y--)if(g[y*36+x].alive){colors.add(g[y*36+x].color);break;}
+    if(game.attackTarget)for(let x=0;x<36;x++){const target=game.attackTarget(x);if(target&&target.available)colors.add(target.color);}
+    else for(let x=0;x<36;x++)for(let y=35;y>=0;y--)if(g[y*36+x].alive){colors.add(g[y*36+x].color);break;}
+    if(game.locks)game.locks.filter(l=>l.remaining>0).forEach(l=>allColors.add(l.color));
     const blocked=heads.filter(w=>!colors.has(w.mesh.userData.colorKey)||(w.partner&&!game.isGroundHead(w.partner))).length/Math.max(1,heads.length);
     const occupied=game.state.slots.filter(Boolean),waiting=occupied.filter(w=>w.mesh.userData.charges===0).length;
     // Local obstruction depth is measured from the live grid, not the requested
@@ -600,10 +659,20 @@
     return g;
   }
 
+  function makeLockDemo() {
+    const rows=Array.from({length:36},()=>Array(36).fill('.'));
+    for(let y=21;y<=23;y++)for(let x=17;x<=19;x++)rows[y][x]='B';
+    for(let y=26;y<=27;y++)for(let x=12;x<=23;x++)rows[y][x]='R';
+    return rows.map(row=>row.join(''));
+  }
+
   const LEVELS = [
     { name: "Level 1", map: MAP_SPIRAL, links: [{ id: "A", members: [[0, 0], [2, 1]] }] },
     { name: "Level 2", map: makeStar() },
-    { name: "Level 3", map: makeDonut() }
+    { name: "Level 3", map: makeDonut() },
+    { name: "色锁试炼", map: makeLockDemo(),
+      lanes: [[{color:'R',charges:1}],[{color:'Y',charges:2}],[{color:'B',charges:1}]],
+      locks: [{id:'L1',x:17,y:21,width:3,height:3,color:'Y',hits:2}] }
   ];
   // Generated levels supply their own queues; do not regenerate or reshuffle them.
   let customRaw = window.__MF_CUSTOM_LEVEL || null;
@@ -986,6 +1055,38 @@
   let attrT0, attrState;
   let aliveCount = 0;
 
+  const locks = [];
+  const lockCoverage = Array(NX * NY).fill(null);
+  let lastLockMarkup = '';
+  function setupLocks(definitions) {
+    locks.length=0;lockCoverage.fill(null);
+    definitions.forEach(function (definition) {
+      const lock=Object.assign({},definition,{remaining:definition.hits,pending:0,flashUntil:0});
+      locks.push(lock);
+      for(let y=lock.y;y<lock.y+lock.height;y++)for(let x=lock.x;x<lock.x+lock.width;x++)lockCoverage[y*NX+x]=lock;
+    });
+    renderLocks();
+  }
+  function lockAtCell(k) { const lock=lockCoverage[k];return lock&&lock.remaining>0?lock:null; }
+  function isBoardCleared() { return aliveCount===0&&locks.every(function(l){return l.remaining===0;}); }
+  function attackTarget(col) {
+    if(col<0||col>=NX)return null;
+    const k=bottomOfColumn(col);if(k<0)return null;
+    const lock=lockAtCell(k);
+    return {k:k,lock:lock,color:lock?lock.color:grid[k].color,available:!lock||lock.pending<lock.remaining};
+  }
+  function renderLocks() {
+    if(window.__MF_HEADLESS)return;
+    const layer=document.getElementById('lockLayer');if(!layer)return;
+    let markup='<defs><pattern id="lockHatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line y1="0" y2="8" stroke="#ffffff" stroke-opacity=".16" stroke-width="2"/></pattern></defs>';
+    locks.filter(function(l){return l.remaining>0;}).forEach(function(lock){
+      const x=BX+lock.x*CW,y=BY+lock.y*CH,w=lock.width*CW,h=lock.height*CH,cx=x+w/2,cy=y+h/2,flash=simT<lock.flashUntil;
+      const color=hexCss(PALETTE[lock.color]);
+      markup+='<g><title>锁 '+lock.id+' · '+lock.color+' 色法师还需命中 '+lock.remaining+' 次</title><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="3" fill="'+color+'" fill-opacity="'+(flash?.6:.2)+'" stroke="#fff0bf" stroke-width="2"/><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="url(#lockHatch)"/><path d="M '+(cx-6)+' '+(cy-3)+' v -6 a 6 6 0 0 1 12 0 v 6" fill="none" stroke="#fff3cc" stroke-width="3"/><rect x="'+(cx-12)+'" y="'+(cy-4)+'" width="24" height="22" rx="4" fill="'+color+'" stroke="#fff1c5" stroke-width="2"/><text x="'+cx+'" y="'+(cy+12)+'" text-anchor="middle" fill="white" font-size="16" font-weight="900" stroke="#281b2f" stroke-width=".6" paint-order="stroke">'+lock.remaining+'</text></g>';
+    });
+    if(markup!==lastLockMarkup){layer.innerHTML=markup;lastLockMarkup=markup;}
+  }
+
   function buildBoard(map) {
     const total = NX * NY;
     const positions = new Float32Array(total * 4 * 3);
@@ -1049,12 +1150,13 @@
   function bottomOfColumn(i) {
     for (let j = NY - 1; j >= 0; j--) {
       const k = j * NX + i;
-      if (grid[k].alive) return k;
+      if (grid[k].alive || lockAtCell(k)) return k;
     }
     return -1;
   }
 
   function componentFrom(k0) {
+    if(lockAtCell(k0))return [];
     const color = grid[k0].color;
     const seen = new Set([k0]);
     const order = [k0];
@@ -1069,7 +1171,7 @@
         if (ni < 0 || ni >= NX || nj < 0 || nj >= NY) continue;
         const nk = nj * NX + ni;
         if (seen.has(nk)) continue;
-        if (!grid[nk].alive || grid[nk].color !== color) continue;
+        if (!grid[nk].alive || lockAtCell(nk) || grid[nk].color !== color) continue;
         seen.add(nk);
         order.push(nk);
         q.push(nk);
@@ -1614,8 +1716,8 @@
   function legalColumnsForColor(colorKey) {
     const cols = [];
     for (let i = 0; i < NX; i++) {
-      const k = bottomOfColumn(i);
-      if (k >= 0 && grid[k].color === colorKey) cols.push(i);
+      const target=attackTarget(i);
+      if(target&&target.available&&target.color===colorKey)cols.push(i);
     }
     return cols;
   }
@@ -1654,8 +1756,9 @@
     hideOverlay();
 
     const lv = LEVELS[n % LEVELS.length];
-    document.getElementById("levelTag").textContent = customLevel ? customLevel.name.slice(0,20) : "Level " + (n + 1);
+    document.getElementById("levelTag").textContent = customLevel ? customLevel.name.slice(0,20) : lv.locks ? lv.name : "Level " + (n + 1);
     buildBoard(lv.map);
+    setupLocks(lv.locks || []);
 
     // 按颜色统计连通块数量 → 每个连通块需要一次施法
     const compCount = {};
@@ -1698,8 +1801,9 @@
     updateCounter();
     hideHint(true);
     renderPairLinks();
+    renderLocks();
     const lvAtStart = n;
-    schedule(0.9, function () { if (state.level === lvAtStart && !state.over) showHint("点队首登带；连线法师需双方都到队首，且空位不少于两个"); });
+    schedule(0.9, function () { if (state.level === lvAtStart && !state.over) showHint(lv.locks&&lv.locks.length?"先清挡路像素；锁需指定颜色命中，数字归零后再清内部像素":"点队首登带；连线法师需双方都到队首，且空位不少于两个"); });
   }
 
   // ---------- 提示 ----------
@@ -1835,8 +1939,8 @@
     if (w.cooldown > 0) return false;
     const col = columnUnderWizard(w);
     if (col < 0) return false;
-    const cell = bottomOfColumn(col);
-    if (cell < 0 || grid[cell].color !== w.mesh.userData.colorKey) return false;
+    const target=attackTarget(col);
+    if(!target||!target.available||target.color!==w.mesh.userData.colorKey)return false;
     w.cooldown = 0.85;
     fireAtColumn(w, col);
     return true;
@@ -1864,6 +1968,7 @@
   // 引信顺序：从命中点开始，按 BFS 距离分层，每层用「离上一颗最近的」接上去，
   // 得到一条沿着色带爬过去的链（像鞭炮引线），而不是整块同时消失。
   function fuseOrderFrom(k0) {
+    if(lockAtCell(k0))return [];
     const dist = new Map();
     dist.set(k0, 0);
     const q = [k0];
@@ -1879,7 +1984,7 @@
         if (ni < 0 || ni >= NX || nj < 0 || nj >= NY) continue;
         const nk = nj * NX + ni;
         if (dist.has(nk)) continue;
-        if (!grid[nk].alive || grid[nk].color !== grid[k0].color) continue;
+        if (!grid[nk].alive || lockAtCell(nk) || grid[nk].color !== grid[k0].color) continue;
         dist.set(nk, d + 1);
         q.push(nk);
         if (!byLevel[d + 1]) byLevel[d + 1] = [];
@@ -1908,12 +2013,48 @@
     return out;
   }
 
+  function consumeShot(w,cooldown) {
+    // A spent linked wizard keeps its carrier until both last shots resolve.
+    w.mesh.userData.charges--;
+    setWizardNumber(w.mesh, w.mesh.userData.charges);
+    if (w.mesh.userData.charges <= 0) {
+      if (partnerOf(w)) {
+        w.waiting = true;
+        showHint("连线 " + w.pair.id + "：弹药耗尽，等待伙伴完成施法");
+      } else {
+        leaveWizard(w);
+        updateCounter();
+      }
+    } else {
+      w.cooldown = cooldown;
+    }
+
+  }
+
+  function fireAtLock(w,target) {
+    const lock=target.lock;
+    if(!target.available||lock.color!==w.mesh.userData.colorKey)return false;
+    lock.pending++;
+    const x=w.mesh.position.x+W/2,from=H/2-w.mesh.position.y-12,to=BY+(lock.y+lock.height)*CH;
+    w.shotUntil=simT+.45;resolveUntil=Math.max(resolveUntil,w.shotUntil);
+    sfx.fire();fireFlash(x,from,PALETTE[lock.color],36);
+    fireStreak(x,from,to,0xfff4d0,function(){
+      lock.pending--;lock.remaining--;lock.flashUntil=simT+.2;
+      fireFlash(x,to,PALETTE[lock.color],42);burstAt(wx(x),wy(to),PALETTE[lock.color],12);sfx.pop(0);
+      showHint(lock.remaining>0?'锁 '+lock.id+'：还需 '+lock.remaining+' 次同色命中':'锁 '+lock.id+' 已解除，继续消除内部像素');
+      renderLocks();
+    });
+    consumeShot(w,.45);
+    return true;
+  }
+
   // ---------- 发射 ----------
   function fireAtColumn(w, col) {
     if (state.rearranging || state.pendingBoarding || col < 0 || col >= NX || !w || w.state !== "slot" || w.moving || w.mesh.userData.charges <= 0 || col !== columnUnderWizard(w)) return false;
-    const k = bottomOfColumn(col);
-    if (k < 0) return false;
-    if (grid[k].color !== w.mesh.userData.colorKey) return false;
+    const target=attackTarget(col);
+    if(!target||!target.available||target.color!==w.mesh.userData.colorKey)return false;
+    if(target.lock)return fireAtLock(w,target);
+    const k=target.k;
 
     const slot = w.slot;
     const targetX = w.mesh.position.x + W / 2;
@@ -1973,24 +2114,11 @@
       attrState.needsUpdate = true;
 
       schedule(0.30 + order.length * step, function () {
-        if (aliveCount <= 0) schedule(Math.max(0, resolveUntil - simT), function () { if (aliveCount <= 0) win(); });
+        if (isBoardCleared()) schedule(Math.max(0, resolveUntil - simT), function () { if (isBoardCleared()) win(); });
       });
     });
 
-    // A spent linked wizard keeps its carrier until both last shots resolve.
-    w.mesh.userData.charges--;
-    setWizardNumber(w.mesh, w.mesh.userData.charges);
-    if (w.mesh.userData.charges <= 0) {
-      if (partnerOf(w)) {
-        w.waiting = true;
-        showHint("连线 " + w.pair.id + "：弹药耗尽，等待伙伴完成施法");
-      } else {
-        leaveWizard(w);
-        updateCounter();
-      }
-    } else {
-      w.cooldown = travel + order.length * step * 0.9 + 0.25;
-    }
+    consumeShot(w,travel+order.length*step*.9+.25);
 
     return true;
   }
@@ -2275,6 +2403,7 @@
     releaseReadyPairs();
     autoFireTick(dt);
     renderPairLinks();
+    renderLocks();
 
     if (state.running && !state.over) {
       acc += dt;
@@ -2390,6 +2519,7 @@
 
   window.__mf = {
     state: state, grid: grid, startLevel: startLevel, linkedPairs: linkedPairs,
+    locks:locks,attackTarget:attackTarget,isBoardCleared:isBoardCleared,lockAtCell:lockAtCell,
     isGroundHead: isGroundHead, boardingStatus: boardingStatus,
     beltPosition: beltPosition, columnUnderWizard: columnUnderWizard,
     step: step, fire: fireAtColumn, send: sendToSlot, wizards: wizards,

@@ -95,6 +95,31 @@ assert.equal(loaded.game.grid.filter(cell=>cell.alive).length,0);
 assert.equal(loaded.game.state.over,true);
 console.log('✓ worker action trace independently replays to a clear board');
 
+const lockedOptions={...options,seed:'qa-locked',locks:1,lockHits:2,lockColor:'Y'};
+const lockedWorker=worker();
+await lockedWorker.context.onmessage({data:{options:lockedOptions}});
+const lockedResult=lockedWorker.messages.find(message=>message.type==='result');
+assert.ok(lockedResult,lockedWorker.messages.find(message=>message.type==='error')?.message||'locked worker produced no result');
+assert.equal(lockedWorker.messages.filter(message=>message.type==='progress').length,24);
+assert.equal(lockedResult.level.locks.length,1);
+assert.equal(lockedResult.level.locks[0].color,'Y');
+assert.equal(lockedResult.level.locks[0].hits,2);
+const lockedGame=loadGame({search:'?sim=0.001',scripts:['level-core.js','game.js'],customLevel:lockedResult.level}).game;
+let lockedAction=0;
+for(let frame=1;frame<=60*360;frame++){
+  const t=frame/60;lockedGame.step(1/60,t);
+  while(lockedAction<lockedResult.level.verification.actions.length&&lockedResult.level.verification.actions[lockedAction].time<=t+1e-6){
+    const action=lockedResult.level.verification.actions[lockedAction++],wizard=lockedGame.wizards.find(w=>w.id===action.id);
+    assert.equal(lockedGame.boardingStatus(wizard).ok,true);
+    assert.equal(lockedGame.send(wizard),true);
+  }
+  if(lockedGame.state.over)break;
+}
+assert.equal(lockedAction,lockedResult.level.verification.actions.length);
+assert.equal(lockedGame.isBoardCleared(),true);
+assert.ok(lockedGame.locks.every(lock=>lock.remaining===0));
+console.log('✓ worker locked candidate replays to all pixels and locks cleared');
+
 const badImport=loadGame({search:'?sim=0.001',scripts:['level-core.js','game.js']});
 const control=badImport.elements.get('importLevel');
 assert.equal(typeof control.onchange,'function');

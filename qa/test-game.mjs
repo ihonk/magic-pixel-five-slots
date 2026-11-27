@@ -12,7 +12,7 @@ function fnSource(name){
   for(let i=open;i<source.length;i++){const ch=source[i];if(quote){if(escaped)escaped=false;else if(ch==='\\')escaped=true;else if(ch===quote)quote=null;continue;}if(ch==='"'||ch==="'"||ch==='`'){quote=ch;continue;}if(ch==='{')depth++;if(ch==='}'&&--depth===0)return source.slice(start,i+1);}
   throw Error(`unterminated ${name}`);
 }
-function mechanics(grid,NX=5,NY=5){const code=['bottomOfColumn','componentFrom','legalColumnsForColor','fuseOrderFrom'].map(fnSource).join('\n');return new Function('grid','NX','NY',`${code};return{bottomOfColumn,componentFrom,legalColumnsForColor,fuseOrderFrom}`)(grid,NX,NY);}
+function mechanics(grid,NX=5,NY=5,locks=[]){const lockCoverage=Array(NX*NY).fill(null);for(const lock of locks)for(let y=lock.y;y<lock.y+lock.height;y++)for(let x=lock.x;x<lock.x+lock.width;x++)lockCoverage[y*NX+x]=lock;const code=['lockAtCell','bottomOfColumn','attackTarget','componentFrom','legalColumnsForColor','fuseOrderFrom'].map(fnSource).join('\n');return new Function('grid','NX','NY','lockCoverage',`${code};return{lockAtCell,bottomOfColumn,attackTarget,componentFrom,legalColumnsForColor,fuseOrderFrom}`)(grid,NX,NY,lockCoverage);}
 function beltApi(){const code=['beltPosition','columnUnderWizard'].map(fnSource).join('\n');return new Function('W','BX','BW','CW','BELT_LEFT','BELT_LENGTH','beltOffset',`${code};return{beltPosition,columnUnderWizard}`)(448,28,392,28, -48,544,0);}
 const makeGrid=(nx=5,ny=5)=>Array.from({length:nx*ny},()=>({alive:false,color:null}));
 const put=(g,nx,x,y,color)=>g[y*nx+x]={alive:true,color};
@@ -22,6 +22,8 @@ test('each column exposes only its lowest live block',()=>{const g=makeGrid();pu
 
 test('components use four directions and exclude diagonals',()=>{const g=makeGrid();put(g,5,1,1,'p');put(g,5,2,1,'p');put(g,5,2,2,'p');put(g,5,0,2,'p');assert.deepEqual(new Set(mechanics(g).componentFrom(6)),new Set([6,7,12]));});
 
+test('locked cells block four-direction components and fuse paths until unlocked',()=>{const g=makeGrid(),lock={x:2,y:2,width:1,height:1,remaining:1,pending:0,color:'y'};for(const x of [1,2,3])put(g,5,x,2,'r');const a=mechanics(g,5,5,[lock]);assert.deepEqual(a.componentFrom(11),[11]);assert.deepEqual(a.fuseOrderFrom(11),[11]);assert.equal(a.attackTarget(2).lock,lock);lock.remaining=0;assert.deepEqual(new Set(a.componentFrom(11)),new Set([11,12,13]));});
+
 test('belt positions are evenly spaced, periodic, and wrap for negative offsets',()=>{const a=beltApi();const base=Array.from({length:5},(_,i)=>a.beltPosition(i,0));base.forEach((x,i)=>assert.ok(Math.abs(x-(-48+i*108.8))<1e-9));for(let i=0;i<5;i++){assert.ok(Math.abs(a.beltPosition(i,544)-base[i])<1e-9);assert.ok(Math.abs(a.beltPosition(i,-544)-base[i])<1e-9);}assert.equal(a.beltPosition(0,-1),495);});
 
 test('columnUnderWizard uses the wizard current position and strict board bounds',()=>{const a=beltApi(),w=x=>({mesh:{position:{x:x-224}}});assert.equal(a.columnUnderWizard(w(27.99)),-1);assert.equal(a.columnUnderWizard(w(28)),0);assert.equal(a.columnUnderWizard(w(55.99)),0);assert.equal(a.columnUnderWizard(w(56)),1);assert.equal(a.columnUnderWizard(w(419.99)),13);assert.equal(a.columnUnderWizard(w(420)),-1);});
@@ -30,7 +32,7 @@ test('fuse order covers exactly one connected component',()=>{const g=makeGrid()
 
 test('five-slot deadlock waits for arrivals and pending shots',()=>{const step=fnSource('step');assert.match(step,/shelfCount\(\)\s*>=\s*5\s*&&\s*!anyLegalMove\(\)/);assert.match(step,/t\s*<\s*resolveUntil/);assert.match(step,/wizards\.some\([^]*w\.moving/);});
 
-test('autoFire only attacks the currently aligned exposed same-color column',()=>{const s=fnSource('autoFire');assert.match(s,/columnUnderWizard\(w\)/);assert.match(s,/bottomOfColumn\(col\)/);assert.match(s,/grid\[cell\]\.color\s*!==\s*w\.mesh\.userData\.colorKey/);assert.doesNotMatch(s,/legalColumnsForColor|bestColumn/);});
+test('autoFire only attacks the currently aligned exposed same-color column',()=>{const s=fnSource('autoFire');assert.match(s,/columnUnderWizard\(w\)/);assert.match(s,/attackTarget\(col\)/);assert.match(s,/target\.color\s*!==\s*w\.mesh\.userData\.colorKey/);assert.doesNotMatch(s,/legalColumnsForColor|bestColumn/);});
 
 test('fireAtColumn rejects cross-column calls and fires a vertical streak from current x',()=>{const s=fnSource('fireAtColumn');assert.match(s,/col\s*!==\s*columnUnderWizard\(w\)/);assert.match(s,/targetX\s*=\s*w\.mesh\.position\.x\s*\+\s*W\s*\/\s*2/);assert.match(s,/fireStreak\(targetX,\s*sourceY,\s*targetDesignY/);assert.doesNotMatch(s,/SLOT_X\[/);});
 
@@ -211,7 +213,7 @@ test('scheduled callbacks are owned by their level generation',()=>{const s=fnSo
 
 test('inter-level transition rejects double clicks and nests completion after reset',()=>{const s=fnSource('goNextLevel'),start=s.indexOf('startLevel(n)'),nested=s.indexOf('schedule(1.3',start);assert.ok(start>=0&&nested>start);assert.match(s,/classList\.contains\("on"\)[^]*return/);assert.match(s,/startLevel\(n\);\s*state\.running\s*=\s*false/);assert.match(s,/intro\.classList\.remove\("on"\);\s*state\.running\s*=\s*true/);});
 
-test('last-shot victory waits until visible resolution completes',()=>{const s=fnSource('fireAtColumn');assert.match(s,/aliveCount\s*<=\s*0[^]*resolveUntil\s*-\s*simT[^]*win\(\)/);});
+test('last-shot victory waits until visible resolution completes',()=>{const s=fnSource('fireAtColumn');assert.match(s,/isBoardCleared\(\)[^]*resolveUntil\s*-\s*simT[^]*win\(\)/);});
 
 test('wizard rebuild disposes old per-wizard GPU resources',()=>{const s=fnSource('buildWizards');assert.match(s,/scene\.remove\(mesh\)/);assert.match(s,/mesh\.traverse/);assert.match(s,/geometries\.forEach[^]*\.dispose\(\)/);assert.match(s,/m\.map[^]*m\.map\.dispose\(\)[^]*m\.dispose\(\)/);});
 

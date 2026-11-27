@@ -1,5 +1,5 @@
 /* Verify candidates by executing the production game in a worker, without drawing. */
-importScripts('./vendor/three.r147.min.js', './level-core.js?v=1');
+importScripts('./vendor/three.r147.min.js', './level-core.js?v=locks-1');
 const delay = setTimeout.bind(self);
 const noop = () => {};
 THREE.WebGLRenderer = class { setPixelRatio(){} setSize(){} setClearColor(){} render(){} };
@@ -17,7 +17,7 @@ function load(level) {
   self.document={body:element('body'),createElement:type=>type==='canvas'?canvas():element(type),getElementById:id=>{if(!elements.has(id))elements.set(id,element(id));return elements.get(id);}};
   self.window={innerWidth:448,innerHeight:960,devicePixelRatio:1,addEventListener:noop,__MF_CUSTOM_LEVEL:level,__MF_PLAY_LOCATION:{search:'?sim=0.001',hash:''},__MF_HEADLESS:true};
   self.requestAnimationFrame=noop;self.setTimeout=noop;self.clearTimeout=noop;
-  importScripts('./game.js?v=level-workshop-1');
+  importScripts('./game.js?v=locks-1');
   return window.__mf;
 }
 function verify(level,variant=0) {
@@ -32,7 +32,7 @@ function verify(level,variant=0) {
     peak=Math.max(peak,game.state.slots.filter(Boolean).length);
     if(frame%30===0&&alive>0)samples.push({progress,pressure:MFLevel.pressure(game)});
     if(game.state.over) {
-      if(alive) return null;
+      if(alive||!game.isBoardCleared())return null;
       const measured=MFLevel.profileFromSamples(samples);
       return {status:'passed',engine:'production-game-60hz',seconds:+t.toFixed(2),peakOccupancy:peak,actions,samples,measured,cleared,usedRevives:0};
     }
@@ -40,7 +40,8 @@ function verify(level,variant=0) {
     const choices=game.state.queue.filter(w=>game.boardingStatus(w).ok);
     // Prefer a head whose colour is currently exposed; legal buffered moves
     // remain available when all heads are covered. No queue rules are bypassed.
-    const exposed=new Set();for(let x=0;x<36;x++)for(let y=35;y>=0;y--)if(game.grid[y*36+x].alive){exposed.add(game.grid[y*36+x].color);break;}
+    const exposed=new Set();for(let x=0;x<36;x++){const target=game.attackTarget(x);if(target&&target.available)exposed.add(target.color);}
+    if(variant===2&&game.state.slots.some(w=>w&&w.mesh.userData.charges>0&&exposed.has(w.mesh.userData.colorKey)))continue;
     const ranked=choices.map(w=>({w,score:(exposed.has(w.mesh.userData.colorKey)?3:0)+(w.partner&&exposed.has(w.partner.mesh.userData.colorKey)?1:0)+rng()*(variant?.9:.2)})).sort((a,b)=>b.score-a.score);
     for(const {w} of ranked)if(game.send(w)){actions.push({time:+t.toFixed(6),id:w.id});lastDispatch=t;break;}
   }
@@ -55,7 +56,7 @@ self.onmessage=async function (event) {
   const {options}=event.data;
   try {
     let best=null,bestError=Infinity,passed=0,matched=0;
-    const attempts=12;
+    const attempts=Math.min(48,12+Number(options.locks||0)*12);
     for(let attempt=0;attempt<attempts;attempt++) {
       postMessage({type:'progress',attempt:attempt+1,total:attempts,passed});
       const level=MFLevel.generateCandidate(options,attempt);

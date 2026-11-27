@@ -13,7 +13,7 @@ function uiRuntime({protocol='http:'}={}){
     return {id,style:{},hidden:false,disabled:false,textContent:'',innerHTML:'',value:'',children:[],className:'',
       classList:{add:x=>classes.add(x),remove:x=>classes.delete(x),contains:x=>classes.has(x),toggle:(x,on)=>on?classes.add(x):classes.delete(x)},
       addEventListener:(type,fn)=>events.set(type,fn),emit:(type,arg)=>events.get(type)?.(arg),
-      querySelectorAll:()=>['difficulty','rhythm','pairs','seed','generate'].map(get),
+      querySelectorAll:()=>['difficulty','rhythm','pairs','seed','locks','lockHits','lockColor','generate'].map(get),
       requestSubmit(){this.emit('submit',{preventDefault(){}});},
       replaceChildren(){this.children=[];},append(...children){this.children.push(...children);},
       click(){this.clicked=true;},remove(){this.removed=true;},
@@ -22,7 +22,7 @@ function uiRuntime({protocol='http:'}={}){
   function get(id){if(!nodes.has(id))nodes.set(id,node(id));return nodes.get(id);}
   const document={getElementById:get,createElement:type=>node(type),body:get('body')};
   const form=get('settings');
-  const values={difficulty:'normal',rhythm:'rising',pairs:'1',seed:'UI-SEED'};
+  const values={difficulty:'normal',rhythm:'rising',pairs:'1',seed:'UI-SEED',locks:'1',lockHits:'2',lockColor:'Y'};
   const FormData=class {constructor(input){assert.equal(input,form);} get(key){return values[key];}};
   const Worker=class {constructor(url){this.url=url;this.terminated=false;workers.push(this);}postMessage(data){this.sent=data;}terminate(){this.terminated=true;}};
   class TestURL extends URL {static createObjectURL(blob){blobs.push(blob);return 'blob:qa';}static revokeObjectURL(){}}
@@ -38,12 +38,15 @@ function uiRuntime({protocol='http:'}={}){
 
 const success=uiRuntime();
 assert.equal(success.workers.length,1,'page starts generation on load');
+assert.equal(success.workers[0].sent.options.locks,1);
+assert.equal(success.workers[0].sent.options.lockHits,2);
+assert.equal(success.workers[0].sent.options.lockColor,'Y');
 assert.equal(success.get('play').disabled,true);
 assert.equal(success.get('cancel').hidden,false);
 success.workers[0].onmessage({data:{type:'progress',attempt:3,total:12,passed:1}});
 assert.match(success.get('status').textContent,/3 \/ 12/);
-const level=success.context.MFLevel.generateCandidate({seed:'ui-result',difficulty:'normal',rhythm:'rising',pairs:1});
-level.generation={...level.generation,passedCandidates:3,candidates:12,fitError:.1};
+const level=success.context.MFLevel.generateCandidate({seed:'ui-result',difficulty:'normal',rhythm:'rising',pairs:1,locks:1,lockHits:2,lockColor:'Y'});
+level.generation={...level.generation,passedCandidates:3,rhythmMatchedCandidates:2,candidates:12,fitError:.1};
 level.verification={status:'passed',seconds:37,measured:[30,35,40,45,50,55],peakOccupancy:4,actions:[{time:1.2,id:'L0-0'}]};
 success.workers[0].onmessage({data:{type:'result',level}});
 assert.equal(success.workers[0].terminated,true);
@@ -52,14 +55,18 @@ assert.equal(success.get('export').disabled,false);
 assert.equal(success.get('copy').disabled,false);
 assert.equal(success.get('verificationState').textContent,'✓ 自动通关已验证');
 assert.equal(success.get('empty').hidden,true);
+assert.equal(success.get('lockStat').textContent,'1 / 2');
 success.get('play').onclick();
 const playLink=success.opens[0][0],parsed=new URL(playLink);
 assert.equal(parsed.pathname,'/workshop/index.html');
 const imported=success.context.MFLevel.validateLevel(JSON.parse(decodeURIComponent(parsed.hash.slice(7))));
 assert.equal(imported.map.length,36);
+assert.equal(imported.locks.length,1);
 success.get('export').onclick();
 assert.equal(success.blobs.length,1);
-assert.equal(success.context.MFLevel.validateLevel(JSON.parse(await success.blobs[0].text())).links.length,1);
+const exported=success.context.MFLevel.validateLevel(JSON.parse(await success.blobs[0].text()));
+assert.equal(exported.links.length,1);
+assert.equal(exported.locks.length,1);
 await success.get('copy').onclick();
 assert.equal(success.copies[0],playLink);
 console.log('✓ progress and verified result unlock play, export and copy with valid level data');
