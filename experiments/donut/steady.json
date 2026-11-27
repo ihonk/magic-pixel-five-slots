@@ -1,0 +1,1277 @@
+{
+  "version": 1,
+  "name": "糖霜甜甜圈 · 轻松 · 平稳推进",
+  "map": [
+    "....................................",
+    "....................................",
+    "....................................",
+    "....................................",
+    "....................................",
+    "....................................",
+    "............YYYRRRPPPYYY............",
+    "..........YYRRRRRRPPPPPPYY..........",
+    ".........YPPRRRRRRPPBBBPRRY.........",
+    ".......YYPPRRRRRRRPPPPPPRRRYY.......",
+    "......YYPPPPPRRRGGGPPPPRRRRRYY......",
+    "......YPPPPPPPRRRRPPPPRRRRRRRY......",
+    ".....YRPPPPPPPRRRRPPPPRRRRRRRPY.....",
+    "....YRRRRPPPPPPRR..PPRRRRRGGGPPY....",
+    "....YRRRRRRPPP........RRRPPPPPPY....",
+    "....YRRRRRRRR..........PPPPPPPPY....",
+    "....YRRBBBRRR..........PPPPPPPPY....",
+    "....RRRRRRRRR..........PPPPPPPPP....",
+    "....PPPPPPPPP..........RRRRRRRRR....",
+    "....YPPPPPPPP..........RRRRRBBBY....",
+    "....YPPPPPPPP..........RRRRRRRRY....",
+    "....YPPPRRRRRR........PPPRRRRRRY....",
+    "....YPPPPRRRRRRPP..RRPPPPPPRRRRY....",
+    ".....YPRRRRGGGPPPPRRRRPRRRPPPRY.....",
+    "......YRRRRRRRPPPPRRRRPPPPPPPY......",
+    "......YYRRRRRPPPPPRRRRRPPGGGYY......",
+    ".......YYRRRPPPPPPRRRRRRPPPYY.......",
+    ".........YRRPPPPRRRRRRRRPPY.........",
+    "..........YYPPPPPPRRRRRRYY..........",
+    "............YYYPPPRRRYYY............",
+    "....................................",
+    "....................................",
+    "....................................",
+    "....................................",
+    "....................................",
+    "...................................."
+  ],
+  "lanes": [
+    [
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "P",
+        "charges": 1
+      },
+      {
+        "color": "R",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "G",
+        "charges": 1
+      },
+      {
+        "color": "R",
+        "charges": 1
+      },
+      {
+        "color": "G",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "P",
+        "charges": 1
+      },
+      {
+        "color": "P",
+        "charges": 1
+      },
+      {
+        "color": "R",
+        "charges": 1
+      },
+      {
+        "color": "G",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "B",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 2
+      }
+    ],
+    [
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "P",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "P",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "B",
+        "charges": 1
+      },
+      {
+        "color": "R",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "P",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      }
+    ],
+    [
+      {
+        "color": "R",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 2
+      },
+      {
+        "color": "Y",
+        "charges": 2
+      },
+      {
+        "color": "R",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "B",
+        "charges": 1
+      },
+      {
+        "color": "R",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "G",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      },
+      {
+        "color": "Y",
+        "charges": 1
+      }
+    ]
+  ],
+  "links": [],
+  "locks": [],
+  "generation": {
+    "seed": "DESSERT-DONUT-steady-0",
+    "attempt": 2,
+    "difficulty": "easy",
+    "rhythm": "steady",
+    "target": [
+      0.26,
+      0.26,
+      0.26,
+      0.26,
+      0.26,
+      0.26
+    ],
+    "requestedPairs": 0,
+    "locks": 0,
+    "lockHits": 2,
+    "lockColor": "random",
+    "candidates": 12,
+    "passedCandidates": 11,
+    "rhythmMatchedCandidates": 11,
+    "fitError": 0.034,
+    "theme": "dessert",
+    "template": "donut-v1",
+    "experimentalTemplate": true
+  },
+  "stats": {
+    "pixels": 484,
+    "components": 44,
+    "lockShots": 0,
+    "wizards": 41
+  },
+  "verification": {
+    "status": "passed",
+    "engine": "production-game-60hz",
+    "seconds": 77.57,
+    "peakOccupancy": 1,
+    "actions": [
+      {
+        "time": 0.016667,
+        "id": "L0-0"
+      },
+      {
+        "time": 0.416667,
+        "id": "L2-0"
+      },
+      {
+        "time": 2.266667,
+        "id": "L2-1"
+      },
+      {
+        "time": 3,
+        "id": "L1-0"
+      },
+      {
+        "time": 3.416667,
+        "id": "L1-1"
+      },
+      {
+        "time": 4.416667,
+        "id": "L0-1"
+      },
+      {
+        "time": 4.833333,
+        "id": "L0-2"
+      },
+      {
+        "time": 5.5,
+        "id": "L1-2"
+      },
+      {
+        "time": 5.9,
+        "id": "L2-2"
+      },
+      {
+        "time": 8.733333,
+        "id": "L0-3"
+      },
+      {
+        "time": 12.2,
+        "id": "L2-3"
+      },
+      {
+        "time": 12.6,
+        "id": "L0-4"
+      },
+      {
+        "time": 13.35,
+        "id": "L1-3"
+      },
+      {
+        "time": 14.716667,
+        "id": "L1-4"
+      },
+      {
+        "time": 15.366667,
+        "id": "L0-5"
+      },
+      {
+        "time": 16.366667,
+        "id": "L0-6"
+      },
+      {
+        "time": 18.6,
+        "id": "L2-4"
+      },
+      {
+        "time": 19.25,
+        "id": "L2-5"
+      },
+      {
+        "time": 20.033333,
+        "id": "L0-7"
+      },
+      {
+        "time": 21.05,
+        "id": "L1-5"
+      },
+      {
+        "time": 21.7,
+        "id": "L0-8"
+      },
+      {
+        "time": 23.416667,
+        "id": "L0-9"
+      },
+      {
+        "time": 25.366667,
+        "id": "L2-6"
+      },
+      {
+        "time": 26.366667,
+        "id": "L0-10"
+      },
+      {
+        "time": 28.383333,
+        "id": "L1-6"
+      },
+      {
+        "time": 31.266667,
+        "id": "L1-7"
+      },
+      {
+        "time": 34.716667,
+        "id": "L1-8"
+      },
+      {
+        "time": 35.733333,
+        "id": "L0-11"
+      },
+      {
+        "time": 38.033333,
+        "id": "L2-7"
+      },
+      {
+        "time": 40.766667,
+        "id": "L2-8"
+      },
+      {
+        "time": 43.5,
+        "id": "L0-12"
+      },
+      {
+        "time": 47.233333,
+        "id": "L1-9"
+      },
+      {
+        "time": 49.833333,
+        "id": "L0-13"
+      },
+      {
+        "time": 53,
+        "id": "L1-10"
+      },
+      {
+        "time": 56.45,
+        "id": "L0-14"
+      },
+      {
+        "time": 59.616667,
+        "id": "L2-9"
+      },
+      {
+        "time": 62.35,
+        "id": "L0-15"
+      },
+      {
+        "time": 65.75,
+        "id": "L2-10"
+      },
+      {
+        "time": 68.966667,
+        "id": "L1-11"
+      },
+      {
+        "time": 72,
+        "id": "L2-11"
+      },
+      {
+        "time": 75.15,
+        "id": "L2-12"
+      }
+    ],
+    "samples": [
+      {
+        "progress": 0.008264462809917328,
+        "pressure": 31
+      },
+      {
+        "progress": 0.008264462809917328,
+        "pressure": 31
+      },
+      {
+        "progress": 0.008264462809917328,
+        "pressure": 31
+      },
+      {
+        "progress": 0.008264462809917328,
+        "pressure": 31
+      },
+      {
+        "progress": 0.08677685950413228,
+        "pressure": 32
+      },
+      {
+        "progress": 0.0950413223140496,
+        "pressure": 25
+      },
+      {
+        "progress": 0.09710743801652888,
+        "pressure": 28
+      },
+      {
+        "progress": 0.09710743801652888,
+        "pressure": 28
+      },
+      {
+        "progress": 0.1673553719008265,
+        "pressure": 29
+      },
+      {
+        "progress": 0.23553719008264462,
+        "pressure": 26
+      },
+      {
+        "progress": 0.30371900826446285,
+        "pressure": 19
+      },
+      {
+        "progress": 0.3078512396694215,
+        "pressure": 22
+      },
+      {
+        "progress": 0.3078512396694215,
+        "pressure": 22
+      },
+      {
+        "progress": 0.31818181818181823,
+        "pressure": 24
+      },
+      {
+        "progress": 0.31818181818181823,
+        "pressure": 24
+      },
+      {
+        "progress": 0.31818181818181823,
+        "pressure": 24
+      },
+      {
+        "progress": 0.31818181818181823,
+        "pressure": 24
+      },
+      {
+        "progress": 0.3243801652892562,
+        "pressure": 24
+      },
+      {
+        "progress": 0.3243801652892562,
+        "pressure": 24
+      },
+      {
+        "progress": 0.3243801652892562,
+        "pressure": 24
+      },
+      {
+        "progress": 0.3243801652892562,
+        "pressure": 24
+      },
+      {
+        "progress": 0.3243801652892562,
+        "pressure": 24
+      },
+      {
+        "progress": 0.3243801652892562,
+        "pressure": 24
+      },
+      {
+        "progress": 0.3243801652892562,
+        "pressure": 24
+      },
+      {
+        "progress": 0.32851239669421484,
+        "pressure": 24
+      },
+      {
+        "progress": 0.39669421487603307,
+        "pressure": 18
+      },
+      {
+        "progress": 0.4028925619834711,
+        "pressure": 22
+      },
+      {
+        "progress": 0.4028925619834711,
+        "pressure": 22
+      },
+      {
+        "progress": 0.4028925619834711,
+        "pressure": 22
+      },
+      {
+        "progress": 0.46900826446280997,
+        "pressure": 19
+      },
+      {
+        "progress": 0.4772727272727273,
+        "pressure": 30
+      },
+      {
+        "progress": 0.4772727272727273,
+        "pressure": 30
+      },
+      {
+        "progress": 0.5495867768595042,
+        "pressure": 17
+      },
+      {
+        "progress": 0.5495867768595042,
+        "pressure": 17
+      },
+      {
+        "progress": 0.5495867768595042,
+        "pressure": 17
+      },
+      {
+        "progress": 0.5495867768595042,
+        "pressure": 17
+      },
+      {
+        "progress": 0.5495867768595042,
+        "pressure": 17
+      },
+      {
+        "progress": 0.5557851239669421,
+        "pressure": 19
+      },
+      {
+        "progress": 0.5599173553719008,
+        "pressure": 21
+      },
+      {
+        "progress": 0.5599173553719008,
+        "pressure": 21
+      },
+      {
+        "progress": 0.5619834710743802,
+        "pressure": 21
+      },
+      {
+        "progress": 0.5619834710743802,
+        "pressure": 21
+      },
+      {
+        "progress": 0.5681818181818181,
+        "pressure": 24
+      },
+      {
+        "progress": 0.578512396694215,
+        "pressure": 25
+      },
+      {
+        "progress": 0.578512396694215,
+        "pressure": 25
+      },
+      {
+        "progress": 0.578512396694215,
+        "pressure": 25
+      },
+      {
+        "progress": 0.6446280991735538,
+        "pressure": 36
+      },
+      {
+        "progress": 0.6446280991735538,
+        "pressure": 36
+      },
+      {
+        "progress": 0.6446280991735538,
+        "pressure": 36
+      },
+      {
+        "progress": 0.6446280991735538,
+        "pressure": 36
+      },
+      {
+        "progress": 0.7004132231404958,
+        "pressure": 21
+      },
+      {
+        "progress": 0.7004132231404958,
+        "pressure": 21
+      },
+      {
+        "progress": 0.7066115702479339,
+        "pressure": 24
+      },
+      {
+        "progress": 0.7066115702479339,
+        "pressure": 24
+      },
+      {
+        "progress": 0.7066115702479339,
+        "pressure": 24
+      },
+      {
+        "progress": 0.7066115702479339,
+        "pressure": 24
+      },
+      {
+        "progress": 0.7727272727272727,
+        "pressure": 25
+      },
+      {
+        "progress": 0.7727272727272727,
+        "pressure": 25
+      },
+      {
+        "progress": 0.7727272727272727,
+        "pressure": 25
+      },
+      {
+        "progress": 0.7727272727272727,
+        "pressure": 25
+      },
+      {
+        "progress": 0.7727272727272727,
+        "pressure": 25
+      },
+      {
+        "progress": 0.7727272727272727,
+        "pressure": 25
+      },
+      {
+        "progress": 0.7789256198347108,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7789256198347108,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7789256198347108,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7789256198347108,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7789256198347108,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7789256198347108,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7789256198347108,
+        "pressure": 26
+      },
+      {
+        "progress": 0.7851239669421488,
+        "pressure": 35
+      },
+      {
+        "progress": 0.7851239669421488,
+        "pressure": 35
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 36
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 36
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 36
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 36
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pressure": 36
+      },
+      {
+        "progress": 0.7933884297520661,
+        "pressure": 35
+      },
+      {
+        "progress": 0.7933884297520661,
+        "pressure": 35
+      },
+      {
+        "progress": 0.7933884297520661,
+        "pressure": 35
+      },
+      {
+        "progress": 0.7933884297520661,
+        "pressure": 35
+      },
+      {
+        "progress": 0.7933884297520661,
+        "pressure": 35
+      },
+      {
+        "progress": 0.8615702479338843,
+        "pressure": 21
+      },
+      {
+        "progress": 0.8615702479338843,
+        "pressure": 21
+      },
+      {
+        "progress": 0.8615702479338843,
+        "pressure": 21
+      },
+      {
+        "progress": 0.8615702479338843,
+        "pressure": 21
+      },
+      {
+        "progress": 0.8615702479338843,
+        "pressure": 21
+      },
+      {
+        "progress": 0.8677685950413223,
+        "pressure": 19
+      },
+      {
+        "progress": 0.8677685950413223,
+        "pressure": 22
+      },
+      {
+        "progress": 0.8677685950413223,
+        "pressure": 22
+      },
+      {
+        "progress": 0.8677685950413223,
+        "pressure": 22
+      },
+      {
+        "progress": 0.8677685950413223,
+        "pressure": 22
+      },
+      {
+        "progress": 0.8677685950413223,
+        "pressure": 22
+      },
+      {
+        "progress": 0.8677685950413223,
+        "pressure": 22
+      },
+      {
+        "progress": 0.8677685950413223,
+        "pressure": 22
+      },
+      {
+        "progress": 0.8698347107438016,
+        "pressure": 24
+      },
+      {
+        "progress": 0.8698347107438016,
+        "pressure": 24
+      },
+      {
+        "progress": 0.8698347107438016,
+        "pressure": 24
+      },
+      {
+        "progress": 0.8698347107438016,
+        "pressure": 24
+      },
+      {
+        "progress": 0.8698347107438016,
+        "pressure": 24
+      },
+      {
+        "progress": 0.9400826446280992,
+        "pressure": 21
+      },
+      {
+        "progress": 0.9400826446280992,
+        "pressure": 21
+      },
+      {
+        "progress": 0.9400826446280992,
+        "pressure": 21
+      },
+      {
+        "progress": 0.9400826446280992,
+        "pressure": 21
+      },
+      {
+        "progress": 0.9400826446280992,
+        "pressure": 21
+      },
+      {
+        "progress": 0.9400826446280992,
+        "pressure": 21
+      },
+      {
+        "progress": 0.9442148760330579,
+        "pressure": 19
+      },
+      {
+        "progress": 0.9442148760330579,
+        "pressure": 22
+      },
+      {
+        "progress": 0.9442148760330579,
+        "pressure": 22
+      },
+      {
+        "progress": 0.9442148760330579,
+        "pressure": 22
+      },
+      {
+        "progress": 0.9442148760330579,
+        "pressure": 22
+      },
+      {
+        "progress": 0.9442148760330579,
+        "pressure": 22
+      },
+      {
+        "progress": 0.9442148760330579,
+        "pressure": 22
+      },
+      {
+        "progress": 0.9545454545454546,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9545454545454546,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9545454545454546,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9545454545454546,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9545454545454546,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9545454545454546,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9545454545454546,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9607438016528925,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9607438016528925,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9607438016528925,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9607438016528925,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9607438016528925,
+        "pressure": 12
+      },
+      {
+        "progress": 0.9669421487603306,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9669421487603306,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9669421487603306,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9669421487603306,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9669421487603306,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9669421487603306,
+        "pressure": 3
+      },
+      {
+        "progress": 0.96900826446281,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9793388429752066,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9793388429752066,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9793388429752066,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9793388429752066,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9793388429752066,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9793388429752066,
+        "pressure": 3
+      },
+      {
+        "progress": 0.981404958677686,
+        "pressure": 3
+      },
+      {
+        "progress": 0.981404958677686,
+        "pressure": 3
+      },
+      {
+        "progress": 0.981404958677686,
+        "pressure": 3
+      },
+      {
+        "progress": 0.981404958677686,
+        "pressure": 3
+      },
+      {
+        "progress": 0.981404958677686,
+        "pressure": 3
+      },
+      {
+        "progress": 0.981404958677686,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9834710743801653,
+        "pressure": 0
+      },
+      {
+        "progress": 0.9834710743801653,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9834710743801653,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9834710743801653,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9834710743801653,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9834710743801653,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9834710743801653,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9917355371900827,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9917355371900827,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9917355371900827,
+        "pressure": 3
+      },
+      {
+        "progress": 0.9917355371900827,
+        "pressure": 3
+      }
+    ],
+    "measured": [
+      31,
+      24,
+      22,
+      25,
+      35,
+      21
+    ],
+    "cleared": [
+      {
+        "progress": 0.008264462809917328,
+        "pixels": 4,
+        "time": 0.367
+      },
+      {
+        "progress": 0.08677685950413228,
+        "pixels": 38,
+        "time": 2.267
+      },
+      {
+        "progress": 0.08884297520661155,
+        "pixels": 1,
+        "time": 2.617
+      },
+      {
+        "progress": 0.0950413223140496,
+        "pixels": 3,
+        "time": 3
+      },
+      {
+        "progress": 0.09710743801652888,
+        "pixels": 1,
+        "time": 3.417
+      },
+      {
+        "progress": 0.1673553719008265,
+        "pixels": 34,
+        "time": 4.417
+      },
+      {
+        "progress": 0.23553719008264462,
+        "pixels": 33,
+        "time": 4.783
+      },
+      {
+        "progress": 0.30371900826446285,
+        "pixels": 33,
+        "time": 5.5
+      },
+      {
+        "progress": 0.3078512396694215,
+        "pixels": 2,
+        "time": 5.85
+      },
+      {
+        "progress": 0.31818181818181823,
+        "pixels": 5,
+        "time": 6.583
+      },
+      {
+        "progress": 0.3243801652892562,
+        "pixels": 3,
+        "time": 8.733
+      },
+      {
+        "progress": 0.32851239669421484,
+        "pixels": 2,
+        "time": 12.2
+      },
+      {
+        "progress": 0.39669421487603307,
+        "pixels": 33,
+        "time": 12.55
+      },
+      {
+        "progress": 0.4028925619834711,
+        "pixels": 3,
+        "time": 13.35
+      },
+      {
+        "progress": 0.46900826446280997,
+        "pixels": 32,
+        "time": 14.717
+      },
+      {
+        "progress": 0.4772727272727273,
+        "pixels": 4,
+        "time": 15.367
+      },
+      {
+        "progress": 0.5495867768595042,
+        "pixels": 35,
+        "time": 16.367
+      },
+      {
+        "progress": 0.5557851239669421,
+        "pixels": 3,
+        "time": 18.6
+      },
+      {
+        "progress": 0.5599173553719008,
+        "pixels": 2,
+        "time": 19.25
+      },
+      {
+        "progress": 0.5619834710743802,
+        "pixels": 1,
+        "time": 20.033
+      },
+      {
+        "progress": 0.5681818181818181,
+        "pixels": 3,
+        "time": 21.05
+      },
+      {
+        "progress": 0.578512396694215,
+        "pixels": 5,
+        "time": 21.7
+      },
+      {
+        "progress": 0.6446280991735538,
+        "pixels": 32,
+        "time": 23.417
+      },
+      {
+        "progress": 0.7004132231404958,
+        "pixels": 27,
+        "time": 25.367
+      },
+      {
+        "progress": 0.7066115702479339,
+        "pixels": 3,
+        "time": 26.367
+      },
+      {
+        "progress": 0.7727272727272727,
+        "pixels": 32,
+        "time": 28.383
+      },
+      {
+        "progress": 0.7789256198347108,
+        "pixels": 3,
+        "time": 31.267
+      },
+      {
+        "progress": 0.7851239669421488,
+        "pixels": 3,
+        "time": 34.717
+      },
+      {
+        "progress": 0.7871900826446281,
+        "pixels": 1,
+        "time": 35.733
+      },
+      {
+        "progress": 0.7933884297520661,
+        "pixels": 3,
+        "time": 38.033
+      },
+      {
+        "progress": 0.8615702479338843,
+        "pixels": 33,
+        "time": 40.767
+      },
+      {
+        "progress": 0.8677685950413223,
+        "pixels": 3,
+        "time": 43.5
+      },
+      {
+        "progress": 0.8698347107438016,
+        "pixels": 1,
+        "time": 47.233
+      },
+      {
+        "progress": 0.9400826446280992,
+        "pixels": 34,
+        "time": 49.833
+      },
+      {
+        "progress": 0.9442148760330579,
+        "pixels": 2,
+        "time": 53
+      },
+      {
+        "progress": 0.9545454545454546,
+        "pixels": 5,
+        "time": 56.45
+      },
+      {
+        "progress": 0.9607438016528925,
+        "pixels": 3,
+        "time": 59.617
+      },
+      {
+        "progress": 0.9669421487603306,
+        "pixels": 3,
+        "time": 62.35
+      },
+      {
+        "progress": 0.96900826446281,
+        "pixels": 1,
+        "time": 65.367
+      },
+      {
+        "progress": 0.9793388429752066,
+        "pixels": 5,
+        "time": 65.75
+      },
+      {
+        "progress": 0.981404958677686,
+        "pixels": 1,
+        "time": 68.967
+      },
+      {
+        "progress": 0.9834710743801653,
+        "pixels": 1,
+        "time": 72
+      },
+      {
+        "progress": 0.9917355371900827,
+        "pixels": 4,
+        "time": 75.15
+      },
+      {
+        "progress": 1,
+        "pixels": 4,
+        "time": 77.017
+      }
+    ],
+    "usedRevives": 0,
+    "independentReplay": "passed",
+    "stageSamples": [
+      8,
+      17,
+      7,
+      18,
+      31,
+      73
+    ]
+  }
+}
