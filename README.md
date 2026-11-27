@@ -4,6 +4,8 @@
 
 在线试玩：https://ihonk.github.io/magic-pixel-five-slots/
 
+新增机制需求：[跨列双法师连线](docs/linked-wizards.md)（需求整理，尚未实现）。
+
 ## 玩法与表现
 
 - 36 × 36 像素棋盘，共有三个演示关卡。
